@@ -1,9 +1,11 @@
 <?php
+
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Models\Wallet;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
@@ -47,6 +49,7 @@ class AuthController extends Controller
             'email'      => 'required|email|unique:users,email',
             'password'   => 'required|min:8|confirmed',
         ]);
+
         $user = User::create([
             'name'      => $request->first_name . ' ' . $request->last_name,
             'email'     => $request->email,
@@ -54,6 +57,19 @@ class AuthController extends Controller
             'api_token' => Str::random(60),
             'role'      => 'user',
         ]);
+
+        Wallet::create([
+            'user_id'              => $user->id,
+            'wallet_number'        => Wallet::generateWalletNumber(),
+            'wallet_name'          => $user->name . "'s KyPay",
+            'balance'              => 0,
+            'locked_balance'       => 0,
+            'status'               => 'active',
+            'pin_set'              => false,
+            'daily_transfer_limit' => 5000000,
+            'daily_topup_limit'    => 10000000,
+        ]);
+
         return response()->json($user, 201);
     }
 
@@ -65,6 +81,7 @@ class AuthController extends Controller
             'email'      => 'required|email|unique:users,email',
             'password'   => 'required|min:8|confirmed',
         ]);
+
         $user = User::create([
             'name'      => $request->first_name . ' ' . $request->last_name,
             'email'     => $request->email,
@@ -72,6 +89,19 @@ class AuthController extends Controller
             'api_token' => Str::random(60),
             'role'      => 'admin',
         ]);
+
+        Wallet::create([
+            'user_id'              => $user->id,
+            'wallet_number'        => Wallet::generateWalletNumber(),
+            'wallet_name'          => $user->name . "'s KyPay",
+            'balance'              => 0,
+            'locked_balance'       => 0,
+            'status'               => 'active',
+            'pin_set'              => false,
+            'daily_transfer_limit' => 50000000,
+            'daily_topup_limit'    => 100000000,
+        ]);
+
         return response()->json($user, 201);
     }
 
@@ -127,9 +157,6 @@ class AuthController extends Controller
         return response()->json(['message' => 'Password berhasil direset! Silakan masuk dengan password baru kamu.']);
     }
 
-    // ==========================================
-    // AUTH - CHANGE PASSWORD (user sedang login)
-    // ==========================================
     public function changePassword(Request $request)
     {
         $user = $this->getUserFromToken($request);
@@ -142,14 +169,10 @@ class AuthController extends Controller
             'password_confirmation' => 'required',
         ]);
         if (!Hash::check($request->current_password, $user->password)) {
-            return response()->json([
-                'errors' => ['current_password' => 'Password lama tidak sesuai']
-            ], 422);
+            return response()->json(['errors' => ['current_password' => 'Password lama tidak sesuai']], 422);
         }
         if (Hash::check($request->password, $user->password)) {
-            return response()->json([
-                'errors' => ['password' => 'Password baru tidak boleh sama dengan password lama']
-            ], 422);
+            return response()->json(['errors' => ['password' => 'Password baru tidak boleh sama dengan password lama']], 422);
         }
         $user->password = Hash::make($request->password);
         $user->save();
@@ -211,6 +234,54 @@ class AuthController extends Controller
             'avatar'     => $user->avatar,
             'avatar_url' => asset('storage/' . $user->avatar),
             'user'       => $user,
+        ]);
+    }
+
+    public function deleteAccount(Request $request)
+    {
+        $user = $this->getUserFromToken($request);
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized. Token tidak valid atau sudah kadaluarsa.',
+            ], 401);
+        }
+
+        $request->validate(['password' => 'required|string']);
+
+        if (!Hash::check($request->password, $user->password)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Password tidak sesuai.',
+            ], 422);
+        }
+
+        $wallet = $user->wallet;
+        if ($wallet && $wallet->balance > 0) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Saldo KyPay kamu masih Rp ' . number_format($wallet->balance, 0, ',', '.') . '. Kosongkan saldo terlebih dahulu.',
+            ], 422);
+        }
+
+        DB::transaction(function () use ($user, $wallet) {
+            if ($user->avatar && Storage::disk('public')->exists($user->avatar)) {
+                Storage::disk('public')->delete($user->avatar);
+            }
+            if ($wallet) {
+                DB::table('transactions')->where('wallet_id', $wallet->id)->delete();
+                $wallet->delete();
+            }
+            DB::table('password_reset_tokens')->where('email', $user->email)->delete();
+            // Hapus token dulu agar invalid sebelum user dihapus
+            $user->api_token = null;
+            $user->save();
+            $user->delete();
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Akun berhasil dihapus.',
         ]);
     }
 

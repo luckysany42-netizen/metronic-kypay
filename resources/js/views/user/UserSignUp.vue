@@ -235,7 +235,6 @@ export default defineComponent({
     const onSubmitRegister = async (values: any) => {
       values = values as User;
 
-      // Clear existing errors
       store.logout();
 
       submitButton.value!.disabled = true;
@@ -245,16 +244,10 @@ export default defineComponent({
       const error = Object.values(store.errors);
 
       if (error.length === 0) {
-        Swal.fire({
-          text: "Akun berhasil dibuat! Silakan masuk.",
-          icon: "success",
-          buttonsStyling: false,
-          confirmButtonText: "Masuk Sekarang",
-          heightAuto: false,
-          customClass: { confirmButton: "btn fw-semibold btn-light-primary" },
-        }).then(() => {
-          router.push({ name: "user-sign-in" });
-        });
+        // ✅ Setelah register sukses, redirect ke halaman buat PIN
+        // Kirim api_token sebagai query param agar halaman set-pin bisa panggil API
+        const token = store.user?.api_token || "";
+        router.push({ name: "user-set-pin", query: { token } });
       } else {
         Swal.fire({
           text: error[0] as string,

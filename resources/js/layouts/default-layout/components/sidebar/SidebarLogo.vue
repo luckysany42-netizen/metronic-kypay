@@ -1,31 +1,28 @@
 <template>
-  <!--begin::Logo-->
   <div class="app-sidebar-logo px-6" id="kt_app_sidebar_logo">
-    <!--begin::Logo image-->
     <router-link to="/">
+      <!-- Dark sidebar atau dark mode -->
       <img
-        v-if="
-          layout === 'dark-sidebar' ||
-          (themeMode === 'dark' && layout === 'light-sidebar')
-        "
+        v-if="layout === 'dark-sidebar' || (themeMode === 'dark' && layout === 'light-sidebar')"
         alt="Logo"
-        :src="getAssetPath('media/logos/logo-mti.png')"
-        class="h-60px app-sidebar-logo-default"
+        :src="getAssetPath('media/logos/logo-kypay.png')"
+        class="h-40px app-sidebar-logo-default"
       />
+      <!-- Light sidebar -->
       <img
         v-if="themeMode === 'light' && layout === 'light-sidebar'"
         alt="Logo"
-        :src="getAssetPath('media/logos/default.svg')"
-        class="h-25px app-sidebar-logo-default"
+        :src="getAssetPath('media/logos/logo-kypay.png')"
+        class="h-40px app-sidebar-logo-default"
       />
+      <!-- Minimize -->
       <img
         alt="Logo"
-        :src="getAssetPath('media/logos/default-small.svg')"
+        :src="getAssetPath('media/logos/logo-kypay-small.png')"
         class="h-20px app-sidebar-logo-minimize"
       />
     </router-link>
-    <!--end::Logo image-->
-    <!--begin::Sidebar toggle-->
+
     <div
       v-if="sidebarToggleDisplay"
       ref="toggleRef"
@@ -38,47 +35,29 @@
     >
       <KTIcon icon-name="black-left-line" icon-class="fs-3 rotate-180 ms-1" />
     </div>
-    <!--end::Sidebar toggle-->
   </div>
-  <!--end::Logo-->
 </template>
 
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
 import { ToggleComponent } from "@/assets/ts/components";
 import { getAssetPath } from "@/core/helpers/assets";
-import {
-  layout,
-  sidebarToggleDisplay,
-  themeMode,
-} from "@/layouts/default-layout/config/helper";
+import { layout, sidebarToggleDisplay, themeMode } from "@/layouts/default-layout/config/helper";
 
 interface IProps {
   sidebarRef: HTMLElement | null;
 }
 
 const props = defineProps<IProps>();
-
 const toggleRef = ref<HTMLFormElement | null>(null);
 
 onMounted(() => {
   setTimeout(() => {
-    const toggleObj = ToggleComponent.getInstance(
-      toggleRef.value!
-    ) as ToggleComponent | null;
-
-    if (toggleObj === null) {
-      return;
-    }
-
-    // Add a class to prevent sidebar hover effect after toggle click
+    const toggleObj = ToggleComponent.getInstance(toggleRef.value!) as ToggleComponent | null;
+    if (toggleObj === null) return;
     toggleObj.on("kt.toggle.change", function () {
-      // Set animation state
       props.sidebarRef?.classList.add("animating");
-
-      // Wait till animation finishes
       setTimeout(function () {
-        // Remove animation state
         props.sidebarRef?.classList.remove("animating");
       }, 300);
     });

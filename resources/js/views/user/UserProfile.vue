@@ -6,44 +6,25 @@
 
       <!--begin::Profile Card-->
       <div class="card profile-hero-card mb-6" style="background: linear-gradient(145deg, #0f1b35 0%, #1a2f5a 50%, #0d2244 100%); border: none; overflow: hidden; position: relative;">
-        <!-- Decorative elements -->
         <div style="position:absolute;top:-40px;right:-40px;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,0.03);pointer-events:none;"></div>
         <div style="position:absolute;bottom:-60px;left:-30px;width:220px;height:220px;border-radius:50%;background:rgba(99,179,237,0.05);pointer-events:none;"></div>
         <div style="position:absolute;top:50%;right:20px;width:1px;height:120px;background:linear-gradient(to bottom, transparent, rgba(255,255,255,0.08), transparent);transform:translateY(-50%);pointer-events:none;"></div>
 
         <div class="card-body px-8 py-10">
-
-          <!--begin::Avatar Upload Section-->
           <div class="d-flex flex-center flex-column">
-
-            <!--begin::Avatar-->
             <div class="position-relative mb-5">
               <div class="symbol symbol-110px symbol-circle" style="box-shadow: 0 0 0 4px rgba(255,255,255,0.1), 0 0 0 8px rgba(99,179,237,0.15);">
-                <img
-                  v-if="avatarPreview || authStore.user.avatar"
-                  :src="avatarPreview || avatarUrl"
-                  alt="avatar"
-                  class="object-fit-cover"
-                />
-                <div v-else class="symbol-label fs-1 fw-bold" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: #fff; font-family: 'DM Sans', sans-serif;">
+                <img v-if="avatarPreview || authStore.user.avatar" :src="avatarPreview || avatarUrl" alt="avatar" class="object-fit-cover" />
+                <div v-else class="symbol-label fs-1 fw-bold" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: #fff;">
                   {{ authStore.user.name ? authStore.user.name.charAt(0).toUpperCase() : 'U' }}
                 </div>
               </div>
-              <label
-                for="avatar-input"
-                class="btn btn-icon btn-circle w-20px h-20px cursor-pointer position-absolute bottom-0 end-0"
-                style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); border: 3px solid #0f1b35; box-shadow: 0 4px 12px rgba(59,130,246,0.5);"
-                title="Ganti foto profil"
-              >
-                <i class="ki-duotone ki-pencil fs-7" style="color:#fff;">
-                  <span class="path1"></span><span class="path2"></span>
-                </i>
+              <label for="avatar-input" class="btn btn-icon btn-circle w-20px h-20px cursor-pointer position-absolute bottom-0 end-0" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); border: 3px solid #0f1b35; box-shadow: 0 4px 12px rgba(59,130,246,0.5);" title="Ganti foto profil">
+                <i class="ki-duotone ki-pencil fs-7" style="color:#fff;"><span class="path1"></span><span class="path2"></span></i>
               </label>
               <input id="avatar-input" type="file" accept="image/jpg,image/jpeg,image/png,image/webp" class="d-none" @change="onAvatarChange" />
             </div>
-            <!--end::Avatar-->
 
-            <!--begin::Avatar actions-->
             <div v-if="avatarPreview" class="d-flex gap-2 mb-5">
               <button type="button" class="btn btn-sm fw-semibold px-5" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: #fff; border:none;" :disabled="avatarUploading" @click="onAvatarUpload">
                 <span v-if="!avatarUploading"><i class="ki-duotone ki-check fs-6 me-1"><span class="path1"></span><span class="path2"></span></i>Simpan</span>
@@ -51,7 +32,6 @@
               </button>
               <button type="button" class="btn btn-sm fw-semibold px-5" style="background:rgba(255,255,255,0.1); color:#fff; border: 1px solid rgba(255,255,255,0.15);" @click="onAvatarCancel">Batal</button>
             </div>
-            <!--end::Avatar actions-->
 
             <div class="text-center mb-2">
               <span class="fw-bolder text-white mb-1 d-block" style="font-size:1.35rem; letter-spacing:-0.3px;">{{ authStore.user.name || '—' }}</span>
@@ -67,12 +47,9 @@
               </div>
             </div>
           </div>
-          <!--end::Avatar Upload Section-->
 
-          <!-- Divider -->
           <div class="my-7" style="height:1px; background: linear-gradient(to right, transparent, rgba(255,255,255,0.1), transparent);"></div>
 
-          <!-- Contact Info -->
           <div class="d-flex flex-column gap-4">
             <div class="d-flex align-items-center gap-4">
               <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0" style="width:36px; height:36px; background:rgba(59,130,246,0.15); border: 1px solid rgba(59,130,246,0.2);">
@@ -112,10 +89,8 @@
             </div>
           </div>
 
-          <!-- Divider -->
           <div class="my-7" style="height:1px; background: linear-gradient(to right, transparent, rgba(255,255,255,0.1), transparent);"></div>
 
-          <!-- Bio -->
           <div v-if="authStore.user.bio">
             <div style="color:rgba(255,255,255,0.4); font-size:0.72rem; font-weight:600; text-transform:uppercase; letter-spacing:0.05em;" class="mb-3">Bio</div>
             <p style="color:rgba(255,255,255,0.7); font-size:0.84rem; line-height:1.7; margin:0;">{{ authStore.user.bio }}</p>
@@ -128,7 +103,6 @@
           </div>
         </div>
       </div>
-      <!--end::Profile Card-->
 
       <!--begin::Profile Completion-->
       <div class="card" style="border: 1px solid #eef0f5; box-shadow: 0 4px 24px rgba(0,0,0,0.04);">
@@ -153,22 +127,19 @@
                 <div class="rounded-circle" :style="field.filled ? 'width:8px;height:8px;background:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,0.15);' : 'width:8px;height:8px;background:#ef4444;box-shadow:0 0 0 3px rgba(239,68,68,0.15);'"></div>
                 <span class="fw-semibold fs-8" style="color:#374151;">{{ field.label }}</span>
               </div>
-              <span v-if="field.filled" style="color:#16a34a; font-size:0.72rem; font-weight:700; letter-spacing:0.03em;">✓ Terisi</span>
-              <span v-else style="color:#dc2626; font-size:0.72rem; font-weight:700; letter-spacing:0.03em;">Kosong</span>
+              <span v-if="field.filled" style="color:#16a34a; font-size:0.72rem; font-weight:700;">✓ Terisi</span>
+              <span v-else style="color:#dc2626; font-size:0.72rem; font-weight:700;">Kosong</span>
             </div>
           </div>
         </div>
       </div>
-      <!--end::Profile Completion-->
-
     </div>
-    <!--end::Sidebar-->
 
-    <!--begin::Main Form-->
-    <div class="col-xl-8">
-      <div class="card h-100" style="border: 1px solid #eef0f5; box-shadow: 0 4px 24px rgba(0,0,0,0.04);">
+    <!--begin::Main-->
+    <div class="col-xl-8 d-flex flex-column gap-6">
 
-        <!-- Card Header -->
+      <!--begin::Edit Profil Form-->
+      <div class="card" style="border: 1px solid #eef0f5; box-shadow: 0 4px 24px rgba(0,0,0,0.04);">
         <div class="card-header border-0 pt-8 pb-4 px-8">
           <div>
             <h3 class="fw-bolder text-gray-800 mb-1" style="font-size:1.25rem; letter-spacing:-0.3px;">Edit Profil</h3>
@@ -180,11 +151,8 @@
             </span>
           </div>
         </div>
-
         <div class="card-body pt-2 px-8 pb-10">
           <VForm @submit="onSubmitProfile" :validation-schema="profileSchema" :initial-values="initialValues">
-
-            <!-- Section: Data Pribadi -->
             <div class="d-flex align-items-center gap-3 mb-6">
               <div class="h-35px d-flex align-items-center px-4 rounded-2 fw-bold fs-8 text-uppercase" style="background: linear-gradient(135deg, #eff6ff, #dbeafe); color:#1d4ed8; letter-spacing:0.06em;">
                 <i class="ki-duotone ki-profile-circle fs-6 me-2" style="color:#3b82f6;"><span class="path1"></span><span class="path2"></span><span class="path3"></span></i>
@@ -192,7 +160,6 @@
               </div>
               <div class="flex-grow-1" style="height:1px; background: linear-gradient(to right, #dbeafe, transparent);"></div>
             </div>
-
             <div class="row g-6 mb-4">
               <div class="col-12">
                 <label class="form-label fw-semibold text-gray-700 fs-7 mb-2 required">Nama Lengkap</label>
@@ -200,11 +167,10 @@
                   <span class="position-absolute top-50 translate-middle-y ms-4 d-flex">
                     <i class="ki-duotone ki-profile-circle fs-4 text-muted"><span class="path1"></span><span class="path2"></span><span class="path3"></span></i>
                   </span>
-                  <Field type="text" name="name" class="form-control form-control-solid ps-12 fs-7" placeholder="Masukkan nama lengkap" style="border-radius: 10px; border: 1.5px solid #eef0f5; transition: border-color 0.2s;" />
+                  <Field type="text" name="name" class="form-control form-control-solid ps-12 fs-7" placeholder="Masukkan nama lengkap" style="border-radius: 10px; border: 1.5px solid #eef0f5;" />
                 </div>
                 <div class="fv-plugins-message-container invalid-feedback mt-1"><ErrorMessage name="name" /></div>
               </div>
-
               <div class="col-12">
                 <label class="form-label fw-semibold text-gray-700 fs-7 mb-2">No. Telepon</label>
                 <div class="position-relative">
@@ -215,8 +181,6 @@
                 </div>
               </div>
             </div>
-
-            <!-- Section: Pekerjaan -->
             <div class="d-flex align-items-center gap-3 mb-6 mt-4">
               <div class="h-35px d-flex align-items-center px-4 rounded-2 fw-bold fs-8 text-uppercase" style="background: linear-gradient(135deg, #fefce8, #fef08a); color:#854d0e; letter-spacing:0.06em;">
                 <i class="ki-duotone ki-briefcase fs-6 me-2" style="color:#ca8a04;"><span class="path1"></span><span class="path2"></span></i>
@@ -224,7 +188,6 @@
               </div>
               <div class="flex-grow-1" style="height:1px; background: linear-gradient(to right, #fef08a, transparent);"></div>
             </div>
-
             <div class="row g-6 mb-4">
               <div class="col-md-6">
                 <label class="form-label fw-semibold text-gray-700 fs-7 mb-2">Jabatan</label>
@@ -245,8 +208,6 @@
                 </div>
               </div>
             </div>
-
-            <!-- Section: Bio -->
             <div class="d-flex align-items-center gap-3 mb-6 mt-4">
               <div class="h-35px d-flex align-items-center px-4 rounded-2 fw-bold fs-8 text-uppercase" style="background: linear-gradient(135deg, #fdf4ff, #f3e8ff); color:#6b21a8; letter-spacing:0.06em;">
                 <i class="ki-duotone ki-notepad fs-6 me-2" style="color:#9333ea;"><span class="path1"></span><span class="path2"></span></i>
@@ -254,7 +215,6 @@
               </div>
               <div class="flex-grow-1" style="height:1px; background: linear-gradient(to right, #f3e8ff, transparent);"></div>
             </div>
-
             <div class="mb-4">
               <div class="d-flex justify-content-between align-items-center mb-2">
                 <label class="form-label fw-semibold text-gray-700 fs-7 mb-0">Bio</label>
@@ -262,35 +222,86 @@
               </div>
               <Field as="textarea" name="bio" class="form-control form-control-solid fs-7" rows="5" placeholder="Ceritakan sedikit tentang kamu..." style="border-radius: 10px; border: 1.5px solid #eef0f5; resize: vertical; line-height: 1.7;" />
             </div>
-
-            <!-- Footer -->
             <div class="d-flex justify-content-between align-items-center pt-6 mt-4" style="border-top: 1.5px dashed #eef0f5;">
               <div class="d-flex align-items-center gap-2 text-muted fw-semibold fs-8">
                 <i class="ki-duotone ki-information-5 fs-6"><span class="path1"></span><span class="path2"></span><span class="path3"></span></i>
                 Perubahan diterapkan setelah disimpan.
               </div>
               <div class="d-flex gap-3">
-                <button type="reset" class="btn btn-light btn-active-light-primary fw-semibold fs-7 px-7" style="border-radius: 10px;">
-                  Reset
-                </button>
+                <button type="reset" class="btn btn-light btn-active-light-primary fw-semibold fs-7 px-7" style="border-radius: 10px;">Reset</button>
                 <button type="submit" ref="submitButton" class="btn fw-semibold fs-7 px-8" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: #fff; border: none; border-radius: 10px; box-shadow: 0 4px 16px rgba(59,130,246,0.35);">
-                  <span class="indicator-label">
-                    <i class="ki-duotone ki-check fs-5 me-1"><span class="path1"></span><span class="path2"></span></i>
-                    Simpan Perubahan
-                  </span>
-                  <span class="indicator-progress">
-                    Menyimpan... <span class="spinner-border spinner-border-sm align-middle ms-2"></span>
-                  </span>
+                  <span class="indicator-label"><i class="ki-duotone ki-check fs-5 me-1"><span class="path1"></span><span class="path2"></span></i>Simpan Perubahan</span>
+                  <span class="indicator-progress">Menyimpan... <span class="spinner-border spinner-border-sm align-middle ms-2"></span></span>
                 </button>
               </div>
             </div>
-
           </VForm>
         </div>
       </div>
-    </div>
-    <!--end::Main Form-->
 
+      <!--begin::Hapus Akun-->
+      <div class="card" style="border: 1.5px solid #fee2e2; box-shadow: 0 4px 24px rgba(239,68,68,0.06);">
+        <div class="card-body p-8">
+          <div class="d-flex align-items-start gap-5">
+            <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0" style="width:48px;height:48px;background:#fef2f2;border:1.5px solid #fecaca;">
+              <i class="bi bi-trash3-fill fs-4" style="color:#ef4444;"></i>
+            </div>
+            <div class="flex-grow-1">
+              <h5 class="fw-bolder text-gray-800 mb-1">Hapus Akun</h5>
+              <p class="text-muted fs-7 mb-4">
+                Setelah akun dihapus, semua data kamu akan dihapus secara permanen dan tidak dapat dipulihkan.
+                Pastikan saldo KyPay kamu sudah <strong>Rp 0</strong> sebelum menghapus akun.
+              </p>
+              <button class="btn btn-sm btn-danger fw-semibold px-6" @click="showDeleteModal = true">
+                <i class="bi bi-trash3 me-2"></i>Hapus Akun Saya
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Modal Konfirmasi Hapus Akun -->
+  <div v-if="showDeleteModal" class="modal fade show d-block" style="background: rgba(0,0,0,0.55);" @click.self="showDeleteModal = false">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+      <div class="modal-content" style="border-radius:16px; border: none; overflow:hidden;">
+        <div class="modal-header border-0 px-7 pt-7 pb-3">
+          <div class="d-flex align-items-center gap-3">
+            <div class="d-flex align-items-center justify-content-center rounded-circle" style="width:40px;height:40px;background:#fef2f2;">
+              <i class="bi bi-exclamation-triangle-fill fs-4" style="color:#ef4444;"></i>
+            </div>
+            <h5 class="modal-title fw-bolder text-gray-800 mb-0">Hapus Akun</h5>
+          </div>
+          <button class="btn btn-icon btn-sm btn-light" @click="showDeleteModal = false">
+            <i class="bi bi-x fs-4"></i>
+          </button>
+        </div>
+        <div class="modal-body px-7 py-4">
+          <div class="notice d-flex bg-light-danger rounded border-danger border border-dashed p-4 mb-5">
+            <i class="bi bi-shield-exclamation fs-3 text-danger me-3 flex-shrink-0 mt-1"></i>
+            <div class="fs-7 text-gray-700">
+              Tindakan ini <strong>tidak dapat dibatalkan</strong>. Seluruh data, riwayat transaksi, dan wallet KyPay kamu akan dihapus permanen.
+            </div>
+          </div>
+          <div class="mb-4">
+            <label class="form-label fw-semibold fs-7 required">Konfirmasi dengan Password</label>
+            <input v-model="deletePassword" type="password" class="form-control form-control-solid" placeholder="Masukkan password kamu" style="border-radius:10px;" />
+          </div>
+          <div v-if="deleteError" class="alert alert-danger py-2 px-4 fs-8 mb-0">
+            <i class="bi bi-exclamation-circle me-2"></i>{{ deleteError }}
+          </div>
+        </div>
+        <div class="modal-footer border-0 px-7 pb-7 pt-0 gap-3">
+          <button class="btn btn-light fw-semibold flex-grow-1" @click="showDeleteModal = false" :disabled="deleting">Batal</button>
+          <button class="btn btn-danger fw-semibold flex-grow-1" @click="confirmDelete" :disabled="deleting || !deletePassword">
+            <span v-if="deleting"><span class="spinner-border spinner-border-sm me-2"></span>Menghapus...</span>
+            <span v-else><i class="bi bi-trash3 me-2"></i>Ya, Hapus Akun</span>
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -298,6 +309,9 @@
 import { defineComponent, computed, ref } from "vue";
 import { ErrorMessage, Field, Form as VForm } from "vee-validate";
 import { useAuthStore } from "@/stores/auth";
+import { useRouter } from "vue-router";
+import ApiService from "@/core/services/ApiService";
+import JwtService from "@/core/services/JwtService";
 import Swal from "sweetalert2/dist/sweetalert2.js";
 import * as Yup from "yup";
 
@@ -306,6 +320,7 @@ export default defineComponent({
   components: { Field, VForm, ErrorMessage },
   setup() {
     const authStore = useAuthStore();
+    const router = useRouter();
     const submitButton = ref<HTMLButtonElement | null>(null);
 
     // ===== AVATAR =====
@@ -323,14 +338,7 @@ export default defineComponent({
       if (!input.files || !input.files[0]) return;
       const file = input.files[0];
       if (file.size > 2 * 1024 * 1024) {
-        Swal.fire({
-          text: "Ukuran foto maksimal 2MB!",
-          icon: "error",
-          buttonsStyling: false,
-          confirmButtonText: "Ok",
-          heightAuto: false,
-          customClass: { confirmButton: "btn btn-light-danger" },
-        });
+        Swal.fire({ text: "Ukuran foto maksimal 2MB!", icon: "error", buttonsStyling: false, confirmButtonText: "Ok", heightAuto: false, customClass: { confirmButton: "btn btn-light-danger" } });
         return;
       }
       avatarFile.value = file;
@@ -343,25 +351,11 @@ export default defineComponent({
       await authStore.uploadAvatar(avatarFile.value);
       const error = Object.values(authStore.errors);
       if (error.length === 0) {
-        Swal.fire({
-          text: "Foto profil berhasil diperbarui!",
-          icon: "success",
-          buttonsStyling: false,
-          confirmButtonText: "Ok!",
-          heightAuto: false,
-          customClass: { confirmButton: "btn btn-light-primary" },
-        });
+        Swal.fire({ text: "Foto profil berhasil diperbarui!", icon: "success", buttonsStyling: false, confirmButtonText: "Ok!", heightAuto: false, customClass: { confirmButton: "btn btn-light-primary" } });
         avatarPreview.value = null;
         avatarFile.value = null;
       } else {
-        Swal.fire({
-          text: error[0] as string,
-          icon: "error",
-          buttonsStyling: false,
-          confirmButtonText: "Coba lagi!",
-          heightAuto: false,
-          customClass: { confirmButton: "btn btn-light-danger" },
-        });
+        Swal.fire({ text: error[0] as string, icon: "error", buttonsStyling: false, confirmButtonText: "Coba lagi!", heightAuto: false, customClass: { confirmButton: "btn btn-light-danger" } });
       }
       avatarUploading.value = false;
     };
@@ -384,11 +378,7 @@ export default defineComponent({
     ];
 
     const fieldStatus = computed(() =>
-      fieldConfig.map((f) => ({
-        key: f.key,
-        label: f.label,
-        filled: !!authStore.user[f.key as keyof typeof authStore.user],
-      }))
+      fieldConfig.map((f) => ({ key: f.key, label: f.label, filled: !!authStore.user[f.key as keyof typeof authStore.user] }))
     );
     const filledCount = computed(() => fieldStatus.value.filter((f) => f.filled).length);
     const totalFields = fieldConfig.length;
@@ -418,61 +408,75 @@ export default defineComponent({
       await authStore.updateProfile(values);
       const error = Object.values(authStore.errors);
       if (error.length === 0) {
-        Swal.fire({
-          text: "Profil berhasil diperbarui!",
-          icon: "success",
-          buttonsStyling: false,
-          confirmButtonText: "Ok, Lanjutkan!",
-          heightAuto: false,
-          customClass: { confirmButton: "btn fw-semibold btn-light-primary" },
-        });
+        Swal.fire({ text: "Profil berhasil diperbarui!", icon: "success", buttonsStyling: false, confirmButtonText: "Ok, Lanjutkan!", heightAuto: false, customClass: { confirmButton: "btn fw-semibold btn-light-primary" } });
       } else {
-        Swal.fire({
-          text: error[0] as string,
-          icon: "error",
-          buttonsStyling: false,
-          confirmButtonText: "Coba Lagi",
-          heightAuto: false,
-          customClass: { confirmButton: "btn fw-semibold btn-light-danger" },
-        });
+        Swal.fire({ text: error[0] as string, icon: "error", buttonsStyling: false, confirmButtonText: "Coba Lagi", heightAuto: false, customClass: { confirmButton: "btn fw-semibold btn-light-danger" } });
       }
       submitButton.value?.removeAttribute("data-kt-indicator");
       submitButton.value!.disabled = false;
     };
 
+    // ===== DELETE ACCOUNT =====
+    const showDeleteModal = ref(false);
+    const deletePassword = ref("");
+    const deleteError = ref("");
+    const deleting = ref(false);
+
+    const confirmDelete = async () => {
+      deleteError.value = "";
+      if (!deletePassword.value) return;
+      deleting.value = true;
+
+      const handleSuccess = async () => {
+        showDeleteModal.value = false;
+        // Hapus token lokal TANPA purgeAuth dulu agar tidak trigger redirect otomatis
+        JwtService.destroyToken();
+        // Tampilkan Swal dulu, baru redirect setelah user klik Ok
+        await Swal.fire({
+          title: "Akun Dihapus!",
+          text: "Akun kamu telah berhasil dihapus.",
+          icon: "success",
+          buttonsStyling: false,
+          confirmButtonText: "Ok",
+          heightAuto: false,
+          allowOutsideClick: false,
+          customClass: { confirmButton: "btn btn-light-primary" },
+        });
+        // Bersihkan store lalu hard redirect agar tidak ada race condition
+        authStore.purgeAuth();
+        window.location.href = "/user/sign-in";
+      };
+
+      try {
+        const { data } = await ApiService.post("account/delete", { password: deletePassword.value });
+        if (data.success) {
+          await handleSuccess();
+        }
+      } catch (e: any) {
+        const status = e.response?.status;
+        // 401 = user sudah terhapus di DB (request pertama berhasil tapi token langsung invalid)
+        if (status === 401) {
+          await handleSuccess();
+          return;
+        }
+        deleteError.value = e.response?.data?.message ?? "Gagal menghapus akun. Coba lagi.";
+      } finally {
+        deleting.value = false;
+      }
+    };
+
     return {
-      authStore,
-      submitButton,
-      profileSchema,
-      initialValues,
-      onSubmitProfile,
-      fieldStatus,
-      filledCount,
-      totalFields,
-      profileCompletion,
-      avatarPreview,
-      avatarUploading,
-      avatarUrl,
-      onAvatarChange,
-      onAvatarUpload,
-      onAvatarCancel,
+      authStore, submitButton, profileSchema, initialValues, onSubmitProfile,
+      fieldStatus, filledCount, totalFields, profileCompletion,
+      avatarPreview, avatarUploading, avatarUrl, onAvatarChange, onAvatarUpload, onAvatarCancel,
+      showDeleteModal, deletePassword, deleteError, deleting, confirmDelete,
     };
   },
 });
 </script>
 
 <style scoped>
-.form-control:focus {
-  border-color: #3b82f6 !important;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12) !important;
-}
-
-.profile-hero-card {
-  transition: box-shadow 0.3s ease;
-}
-
-.btn:hover {
-  transform: translateY(-1px);
-  transition: transform 0.15s ease;
-}
+.form-control:focus { border-color: #3b82f6 !important; box-shadow: 0 0 0 3px rgba(59,130,246,0.12) !important; }
+.profile-hero-card { transition: box-shadow 0.3s ease; }
+.btn:hover { transform: translateY(-1px); transition: transform 0.15s ease; }
 </style>

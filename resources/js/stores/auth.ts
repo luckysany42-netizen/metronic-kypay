@@ -109,12 +109,12 @@ export const useAuthStore = defineStore("auth", () => {
       .catch(({ response }) => { setError(response.data.errors); throw response; });
   }
 
-  function verifyAuth() {
+async function verifyAuth() {
     if (JwtService.getToken()) {
       ApiService.setHeader();
-      ApiService.post("verify_token", { api_token: JwtService.getToken() })
+      await ApiService.post("verify_token", { api_token: JwtService.getToken() })
         .then(({ data }) => { setAuth(data); })
-        .catch(({ response }) => { setError(response.data.errors); purgeAuth(); });
+        .catch(() => { purgeAuth(); });
     } else {
       purgeAuth();
     }

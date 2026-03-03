@@ -4,7 +4,7 @@ const UserMenuConfig: Array<MenuItem> = [
   {
     pages: [
       {
-        heading: "dashboard",
+        heading: "Dashboard",
         route: "/user/dashboard",
         keenthemesIcon: "element-11",
         bootstrapIcon: "bi-app-indicator",
@@ -12,8 +12,36 @@ const UserMenuConfig: Array<MenuItem> = [
     ],
   },
   {
-    heading: "account",
-    route: "/user",
+    heading: "KyPay",
+    pages: [
+      {
+        heading: "Wallet Saya",
+        route: "/user/wallet",
+        keenthemesIcon: "wallet",
+        bootstrapIcon: "bi-wallet2",
+      },
+      {
+        sectionTitle: "Transaksi",
+        route: "/user/topup",
+        keenthemesIcon: "dollar",
+        bootstrapIcon: "bi-arrow-left-right",
+        sub: [
+          { heading: "Top Up",          route: "/user/topup" },
+          { heading: "Riwayat Top Up",  route: "/user/topup/history" },
+          { heading: "Transfer",        route: "/user/transfer" },
+          { heading: "Semua Transaksi", route: "/user/transactions" },
+        ],
+      },
+      {
+        heading: "Bayar & Beli",
+        route: "/user/payment",
+        keenthemesIcon: "tag",
+        bootstrapIcon: "bi-grid-fill",
+      },
+    ],
+  },
+  {
+    heading: "Account",
     pages: [
       {
         heading: "My Profile",

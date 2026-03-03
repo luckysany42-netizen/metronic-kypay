@@ -21,6 +21,12 @@ const routes: Array<RouteRecordRaw> = [
         meta: { pageTitle: "Dashboard", breadcrumbs: ["Dashboards"] },
       },
       {
+        path: "/admin/profile",
+        name: "admin-profile",
+        component: () => import("@/views/admin/AdminProfile.vue"),
+        meta: { pageTitle: "Edit Profil", breadcrumbs: ["Account"], middleware: "auth" },
+      },
+      {
         path: "/builder",
         name: "builder",
         component: () => import("@/views/LayoutBuilder.vue"),
@@ -80,6 +86,20 @@ const routes: Array<RouteRecordRaw> = [
       { path: "/crafted/widgets/mixed",                  name: "widgets-mixed",                          component: () => import("@/views/crafted/widgets/Mixed.vue"),                  meta: { pageTitle: "Mixed",                breadcrumbs: ["Crafted", "Widgets"] } },
       { path: "/crafted/widgets/tables",                 name: "widgets-tables",                         component: () => import("@/views/crafted/widgets/Tables.vue"),                 meta: { pageTitle: "Tables",               breadcrumbs: ["Crafted", "Widgets"] } },
       { path: "/crafted/widgets/feeds",                  name: "widgets-feeds",                          component: () => import("@/views/crafted/widgets/Feeds.vue"),                  meta: { pageTitle: "Feeds",                breadcrumbs: ["Crafted", "Widgets"] } },
+
+      // ===== KYPAY ADMIN ROUTES =====
+      {
+        path: "/kypay/topup-approval",
+        name: "admin-topup-approval",
+        component: () => import("@/views/admin/kypay/AdminTopUpApproval.vue"),
+        meta: { pageTitle: "Approval Top Up", breadcrumbs: ["KyPay"], middleware: "auth" },
+      },
+      {
+        path: "/kypay/payment-methods",
+        name: "admin-payment-methods",
+        component: () => import("@/views/admin/kypay/AdminPaymentMethods.vue"),
+        meta: { pageTitle: "Metode Pembayaran", breadcrumbs: ["KyPay"], middleware: "auth" },
+      },
     ],
   },
 
@@ -101,6 +121,45 @@ const routes: Array<RouteRecordRaw> = [
         name: "user-profile",
         component: () => import("@/views/user/UserProfile.vue"),
         meta: { pageTitle: "My Profile", middleware: "auth-user" },
+      },
+
+      // ===== KYPAY USER ROUTES =====
+      {
+        path: "/user/wallet",
+        name: "user-wallet",
+        component: () => import("@/views/user/kypay/UserWallet.vue"),
+        meta: { pageTitle: "KyPay Wallet", middleware: "auth-user" },
+      },
+      {
+        path: "/user/topup",
+        name: "user-topup",
+        component: () => import("@/views/user/kypay/UserTopUp.vue"),
+        meta: { pageTitle: "Top Up KyPay", middleware: "auth-user" },
+      },
+      {
+        path: "/user/topup/history",
+        name: "user-topup-history",
+        component: () => import("@/views/user/kypay/UserTopUpHistory.vue"),
+        meta: { pageTitle: "Riwayat Top Up", middleware: "auth-user" },
+      },
+      {
+        path: "/user/transfer",
+        name: "user-transfer",
+        component: () => import("@/views/user/kypay/UserTransfer.vue"),
+        meta: { pageTitle: "Transfer KyPay", middleware: "auth-user" },
+      },
+      {
+        path: "/user/transactions",
+        name: "user-transactions",
+        component: () => import("@/views/user/kypay/UserTransactions.vue"),
+        meta: { pageTitle: "Riwayat Transaksi", middleware: "auth-user" },
+      },
+      // ✅ PAYMENT — Bayar & Beli
+      {
+        path: "/user/payment",
+        name: "user-payment",
+        component: () => import("@/views/user/kypay/UserPayment.vue"),
+        meta: { pageTitle: "Bayar & Beli", middleware: "auth-user" },
       },
     ],
   },
@@ -129,7 +188,6 @@ const routes: Array<RouteRecordRaw> = [
         component: () => import("@/views/crafted/authentication/basic-flow/PasswordReset.vue"),
         meta: { pageTitle: "Lupa Password" },
       },
-      // --- Shared: halaman input password baru (admin & user pakai route yang sama) ---
       {
         path: "/reset-password",
         name: "reset-password",
@@ -150,12 +208,19 @@ const routes: Array<RouteRecordRaw> = [
         component: () => import("@/views/user/UserSignUp.vue"),
         meta: { pageTitle: "User Sign Up" },
       },
-      // --- User: halaman lupa password (pakai PasswordReset.vue yang sudah ada) ---
       {
         path: "/user/password-reset",
         name: "user-password-reset",
         component: () => import("@/views/crafted/authentication/basic-flow/PasswordReset.vue"),
         meta: { pageTitle: "Lupa Password" },
+      },
+
+      // SET PIN — setelah register, sebelum login
+      {
+        path: "/user/set-pin",
+        name: "user-set-pin",
+        component: () => import("@/views/user/UserSetPin.vue"),
+        meta: { pageTitle: "Buat PIN KyPay" },
       },
     ],
   },
@@ -185,13 +250,13 @@ const router = createRouter({
   },
 });
 
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore();
   const configStore = useConfigStore();
 
   document.title = `${to.meta.pageTitle} - ${import.meta.env.VITE_APP_NAME}`;
   configStore.resetLayoutConfig();
-  authStore.verifyAuth();
+  await authStore.verifyAuth();
 
   if (to.meta.middleware === "auth") {
     if (authStore.isAuthenticated && authStore.isAdmin()) {

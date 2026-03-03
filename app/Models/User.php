@@ -32,8 +32,14 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
-            'password' => 'hashed',
+            'password'          => 'hashed',
         ];
+    }
+
+    // ✅ KyPay: Relasi ke Wallet
+    public function wallet()
+    {
+        return $this->hasOne(Wallet::class);
     }
 
     public function isAdmin(): bool
