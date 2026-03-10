@@ -4,211 +4,189 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Wallet;
-use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
 
 class WalletController extends Controller
 {
-    /**
-     * GET /api/wallet
-     */
     public function show(Request $request)
     {
-        $user = $this->getUserFromToken($request);
-        if (!$user) {
-            return response()->json(['errors' => ['auth' => 'Unauthorized']], 401);
-        }
+        $user   = $request->user();
+        $wallet = $user->wallet()->with('user:id,name,email,avatar')->first();
 
-        $wallet = $user->wallet;
         if (!$wallet) {
-            return response()->json(['errors' => ['wallet' => 'Wallet tidak ditemukan']], 404);
+            return response()->json([
+                'success' => false,
+                'message' => 'Wallet belum dibuat. Silakan hubungi admin.',
+            ], 404);
         }
 
         return response()->json([
-            'wallet' => $wallet,
-            'balance' => number_format($wallet->balance, 0, ',', '.'),
-            'available_balance' => number_format($wallet->available_balance, 0, ',', '.'),
+            'success' => true,
+            'data'    => [
+                'wallet_number'        => $wallet->wallet_number,
+                'wallet_name'          => $wallet->wallet_name,
+                'balance'              => (float) $wallet->balance,
+                'locked_balance'       => (float) $wallet->locked_balance,
+                'available_balance'    => (float) ($wallet->balance - $wallet->locked_balance),
+                'status'               => $wallet->status,
+                'pin_set'              => (bool) $wallet->pin_set,
+                'daily_transfer_limit' => (float) $wallet->daily_transfer_limit,
+                'daily_topup_limit'    => (float) $wallet->daily_topup_limit,
+                'last_transaction_at'  => $wallet->last_transaction_at,
+            ],
         ]);
     }
 
-    /**
-     * POST /api/wallet/set-initial-pin
-     */
-    public function setInitialPin(Request $request)
+    public function transactions(Request $request)
     {
-        $request->validate([
-            'api_token'        => 'required|string',
-            'pin'              => 'required|digits:6',
-            'pin_confirmation' => 'required|digits:6|same:pin',
-        ]);
-
-        $user = User::where('api_token', $request->api_token)->first();
-        if (!$user) {
-            return response()->json(['errors' => ['api_token' => 'Token tidak valid atau sudah kadaluarsa']], 401);
-        }
-
+        $user   = $request->user();
         $wallet = $user->wallet;
+
         if (!$wallet) {
-            return response()->json(['errors' => ['wallet' => 'Wallet tidak ditemukan']], 404);
+            return response()->json(['success' => false, 'message' => 'Wallet tidak ditemukan.'], 404);
         }
 
-        if ($wallet->pin_set) {
-            return response()->json(['errors' => ['pin' => 'PIN sudah pernah dibuat sebelumnya']], 422);
-        }
+        $transactions = $wallet->transactions()
+            ->with('relatedWallet.user:id,name,avatar')
+            ->latest()
+            ->paginate(15);
 
-        if (preg_match('/^(.)\1{5}$/', $request->pin)) {
-            return response()->json(['errors' => ['pin' => 'PIN tidak boleh 6 angka yang sama']], 422);
-        }
-        if (in_array($request->pin, ['123456', '654321'])) {
-            return response()->json(['errors' => ['pin' => 'PIN terlalu mudah ditebak']], 422);
-        }
+        $mapped = $transactions->getCollection()->map(function ($trx) {
+            return [
+                'id'                 => $trx->id,
+                'transaction_number' => $trx->transaction_number,
+                'type'               => $trx->type,
+                'type_label'         => $trx->type_label ?? $trx->type,
+                'amount'             => (float) $trx->amount,
+                'fee'                => (float) $trx->fee,
+                'balance_before'     => (float) $trx->balance_before,
+                'balance_after'      => (float) $trx->balance_after,
+                'status'             => $trx->status,
+                'description'        => $trx->description,
+                'note'               => $trx->note,
+                'is_credit'          => $trx->isCredit(),
+                'related_user'       => $trx->relatedWallet?->user ? [
+                    'name'   => $trx->relatedWallet->user->name,
+                    'avatar' => $trx->relatedWallet->user->avatar,
+                ] : null,
+                'created_at' => $trx->created_at,
+            ];
+        });
 
-        $wallet->pin     = Hash::make($request->pin);
-        $wallet->pin_set = true;
-        $wallet->save();
-
-        return response()->json(['message' => 'PIN berhasil dibuat! Silakan masuk ke akun kamu.']);
+        return response()->json([
+            'success' => true,
+            'data'    => $mapped,
+            'meta'    => [
+                'current_page' => $transactions->currentPage(),
+                'last_page'    => $transactions->lastPage(),
+                'total'        => $transactions->total(),
+            ],
+        ]);
     }
 
     /**
      * POST /api/wallet/set-pin
+     * FIX: cek pin_set dari DB bukan dari request body
      */
     public function setPin(Request $request)
     {
-        $user = $this->getUserFromToken($request);
-        if (!$user) {
-            return response()->json(['errors' => ['auth' => 'Unauthorized']], 401);
-        }
-
+        $user   = $request->user();
         $wallet = $user->wallet;
+
         if (!$wallet) {
-            return response()->json(['errors' => ['wallet' => 'Wallet tidak ditemukan']], 404);
+            return response()->json(['success' => false, 'message' => 'Wallet tidak ditemukan.'], 404);
         }
 
+        // Validasi dinamis — current_pin hanya wajib jika PIN sudah ada di DB
         $rules = [
-            'pin'              => 'required|digits:6',
-            'pin_confirmation' => 'required|digits:6|same:pin',
+            'pin'              => 'required|string|size:6|regex:/^[0-9]{6}$/',
+            'pin_confirmation' => 'required|same:pin',
         ];
 
         if ($wallet->pin_set) {
-            $rules['current_pin'] = 'required|digits:6';
+            $rules['current_pin'] = 'required|string|size:6';
         }
 
         $request->validate($rules);
 
+        // Verifikasi PIN lama
         if ($wallet->pin_set) {
-            if (!Hash::check($request->current_pin, $wallet->pin)) {
-                return response()->json(['errors' => ['current_pin' => 'PIN lama tidak sesuai']], 422);
+            if (!$wallet->verifyPin($request->current_pin)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'PIN saat ini tidak valid.',
+                ], 422);
             }
         }
 
-        $wallet->pin     = Hash::make($request->pin);
-        $wallet->pin_set = true;
-        $wallet->save();
+        $isNew = !$wallet->pin_set;
 
-        return response()->json(['message' => $wallet->pin_set ? 'PIN berhasil diubah!' : 'PIN berhasil dibuat!']);
-    }
-
-    /**
-     * GET /api/wallet/find/{wallet_number}
-     * Cari wallet berdasarkan nomor wallet persis (untuk transfer)
-     */
-    public function findByNumber(Request $request, string $walletNumber)
-    {
-        $user = $this->getUserFromToken($request);
-        if (!$user) {
-            return response()->json(['errors' => ['auth' => 'Unauthorized']], 401);
-        }
-
-        $wallet = Wallet::with('user')
-            ->where('wallet_number', $walletNumber)
-            ->where('status', 'active')
-            ->first();
-
-        if (!$wallet) {
-            return response()->json(['errors' => ['wallet' => 'Nomor wallet tidak ditemukan']], 404);
-        }
-
-        if ($wallet->user_id === $user->id) {
-            return response()->json(['errors' => ['wallet' => 'Tidak bisa transfer ke wallet sendiri']], 422);
-        }
+        $wallet->update([
+            'pin'     => Hash::make($request->pin),
+            'pin_set' => true,
+        ]);
 
         return response()->json([
-            'wallet' => [
-                'id'            => $wallet->id,
-                'wallet_number' => $wallet->wallet_number,
-                'wallet_name'   => $wallet->wallet_name,
-                'user_name'     => $wallet->user->name ?? '-',
-                'avatar'        => $wallet->user->avatar ?? null,
-            ]
+            'success' => true,
+            'message' => $isNew ? 'PIN berhasil dibuat.' : 'PIN berhasil diperbarui.',
         ]);
     }
 
-    /**
-     * GET /api/wallet/search?q=nomor_atau_nama
-     */
-    public function search(Request $request)
+    public function verifyPin(Request $request)
     {
-        $user = $this->getUserFromToken($request);
-        if (!$user) {
-            return response()->json(['errors' => ['auth' => 'Unauthorized']], 401);
+        $request->validate([
+            'pin' => 'required|string|size:6',
+        ]);
+
+        $wallet = $request->user()->wallet;
+
+        if (!$wallet || !$wallet->pin_set) {
+            return response()->json([
+                'success' => false,
+                'message' => 'PIN belum diset. Silakan buat PIN terlebih dahulu.',
+            ], 422);
         }
 
-        $q = $request->query('q', '');
-        if (strlen($q) < 3) {
-            return response()->json(['wallets' => []]);
+        $valid = $wallet->verifyPin($request->pin);
+
+        return response()->json([
+            'success' => $valid,
+            'message' => $valid ? 'PIN valid.' : 'PIN tidak valid.',
+        ], $valid ? 200 : 422);
+    }
+
+    public function findByNumber(Request $request, string $walletNumber)
+    {
+        $myWallet = $request->user()->wallet;
+
+        if ($myWallet && $myWallet->wallet_number === $walletNumber) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tidak bisa transfer ke wallet sendiri.',
+            ], 422);
         }
 
-        $wallets = Wallet::with('user')
+        $wallet = Wallet::where('wallet_number', $walletNumber)
             ->where('status', 'active')
-            ->where('user_id', '!=', $user->id)
-            ->where(function ($query) use ($q) {
-                $query->where('wallet_number', 'like', "%$q%")
-                      ->orWhere('wallet_name', 'like', "%$q%")
-                      ->orWhereHas('user', fn($q2) => $q2->where('name', 'like', "%$q%"));
-            })
-            ->limit(10)
-            ->get()
-            ->map(fn($w) => [
-                'id'            => $w->id,
-                'wallet_number' => $w->wallet_number,
-                'wallet_name'   => $w->wallet_name,
-                'user_name'     => $w->user->name ?? '-',
-                'avatar'        => $w->user->avatar ?? null,
-            ]);
+            ->with('user:id,name,avatar')
+            ->first();
 
-        return response()->json(['wallets' => $wallets]);
-    }
-
-    /**
-     * GET /api/wallet/transactions
-     */
-    public function transactions(Request $request)
-    {
-        $user = $this->getUserFromToken($request);
-        if (!$user) {
-            return response()->json(['errors' => ['auth' => 'Unauthorized']], 401);
-        }
-
-        $wallet = $user->wallet;
         if (!$wallet) {
-            return response()->json(['errors' => ['wallet' => 'Wallet tidak ditemukan']], 404);
+            return response()->json([
+                'success' => false,
+                'message' => 'Nomor wallet tidak ditemukan atau tidak aktif.',
+            ], 404);
         }
 
-        $transactions = $wallet->transactions()
-            ->orderBy('created_at', 'desc')
-            ->paginate(20);
-
-        return response()->json($transactions);
-    }
-
-    private function getUserFromToken(Request $request): ?User
-    {
-        $header = $request->header('Authorization');
-        if (!$header) return null;
-        $token = str_replace('Token ', '', $header);
-        return User::where('api_token', $token)->first();
+        return response()->json([
+            'success' => true,
+            'data'    => [
+                'wallet_number' => $wallet->wallet_number,
+                'wallet_name'   => $wallet->wallet_name,
+                'owner_name'    => $wallet->user->name,
+                'owner_avatar'  => $wallet->user->avatar,
+            ],
+        ]);
     }
 }

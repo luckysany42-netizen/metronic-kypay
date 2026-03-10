@@ -93,15 +93,15 @@
         <!-- Trust badges -->
         <div class="trust-badges">
           <div class="badge-item">
-            <span class="badge-icon">🔒</span>
+            <span class="badge-icon"></span>
             <span>Enkripsi 256-bit</span>
           </div>
           <div class="badge-item">
-            <span class="badge-icon">⚡</span>
+            <span class="badge-icon"></span>
             <span>Transfer instan</span>
           </div>
           <div class="badge-item">
-            <span class="badge-icon">✓</span>
+            <span class="badge-icon"></span>
             <span>Transaksi aman</span>
           </div>
         </div>

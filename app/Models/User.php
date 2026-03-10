@@ -36,7 +36,7 @@ class User extends Authenticatable
         ];
     }
 
-    // ✅ KyPay: Relasi ke Wallet
+    // KyPay: Relasi ke Wallet
     public function wallet()
     {
         return $this->hasOne(Wallet::class);

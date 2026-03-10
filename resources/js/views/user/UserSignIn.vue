@@ -10,31 +10,6 @@
       </div>
     </div>
 
-    <!-- Social Login -->
-    <div class="d-flex gap-3 mb-7">
-      <a href="#" class="d-flex align-items-center justify-content-center gap-2 fw-semibold fs-7 text-gray-700 text-decoration-none flex-grow-1"
-        style="border: 1.5px solid #e2e8f0; padding: 11px 16px; border-radius: 10px; background: #fff; transition: all 0.18s;"
-        @mouseenter="e => { (e.currentTarget as HTMLElement).style.background='#f8fafc'; (e.currentTarget as HTMLElement).style.borderColor='#cbd5e1'; }"
-        @mouseleave="e => { (e.currentTarget as HTMLElement).style.background='#fff'; (e.currentTarget as HTMLElement).style.borderColor='#e2e8f0'; }">
-        <img alt="Google" :src="getAssetPath('media/svg/brand-logos/google-icon.svg')" class="h-15px" />
-        Gunakan Google
-      </a>
-      <a href="#" class="d-flex align-items-center justify-content-center gap-2 fw-semibold fs-7 text-gray-700 text-decoration-none flex-grow-1"
-        style="border: 1.5px solid #e2e8f0; padding: 11px 16px; border-radius: 10px; background: #fff; transition: all 0.18s;"
-        @mouseenter="e => { (e.currentTarget as HTMLElement).style.background='#f8fafc'; (e.currentTarget as HTMLElement).style.borderColor='#cbd5e1'; }"
-        @mouseleave="e => { (e.currentTarget as HTMLElement).style.background='#fff'; (e.currentTarget as HTMLElement).style.borderColor='#e2e8f0'; }">
-        <img alt="Apple" :src="getAssetPath('media/svg/brand-logos/apple-black.svg')" class="h-15px" />
-        Gunakan Apple
-      </a>
-    </div>
-
-    <!-- OR Divider -->
-    <div class="d-flex align-items-center gap-3 mb-7">
-      <div class="flex-grow-1" style="height:1px; background: #e2e8f0;"></div>
-      <span class="text-muted fw-semibold fs-8 text-uppercase" style="letter-spacing:0.1em;">atau</span>
-      <div class="flex-grow-1" style="height:1px; background: #e2e8f0;"></div>
-    </div>
-
     <!-- Form -->
     <VForm
       class="form w-100"
@@ -42,33 +17,42 @@
       @submit="onSubmitLogin"
       :validation-schema="loginSchema"
     >
-      <!-- Email -->
+      <!-- Nomor HP -->
       <div class="fv-row mb-5">
-        <label class="form-label fw-semibold fs-7 text-gray-700 mb-2">Email</label>
-        <Field
-          class="form-control form-control-lg fs-7"
-          type="text"
-          name="email"
-          placeholder="email@email.com"
-          autocomplete="off"
-          style="border-radius: 10px; border: 1.5px solid #e2e8f0; background: #fff; color: #374151;"
-        />
+        <label class="form-label fw-semibold fs-7 text-gray-700 mb-2">Nomor HP</label>
+        <div class="position-relative">
+          <!-- Prefix +62 -->
+          <div class="position-absolute top-50 translate-middle-y ms-3 d-flex align-items-center gap-2" style="z-index:2; pointer-events:none;">
+            <span class="fw-bold fs-7" style="color:#374151;">🇮🇩 +62</span>
+            <div style="width:1px; height:18px; background:#e2e8f0;"></div>
+          </div>
+          <Field
+            tabindex="1"
+            class="form-control form-control-lg fs-7"
+            type="tel"
+            name="phone"
+            placeholder="8xxxxxxxxxx"
+            autocomplete="off"
+            inputmode="numeric"
+            style="border-radius: 10px; border: 1.5px solid #e2e8f0; background: #fff; color: #374151; padding-left: 90px;"
+          />
+        </div>
         <div class="fv-plugins-message-container mt-1">
-          <div class="fv-help-block text-danger fs-8 fw-semibold"><ErrorMessage name="email" /></div>
+          <div class="fv-help-block text-danger fs-8 fw-semibold"><ErrorMessage name="phone" /></div>
         </div>
       </div>
 
       <!-- Password -->
-      <div class="fv-row mb-5">
+      <div class="fv-row mb-7">
         <div class="d-flex justify-content-between align-items-center mb-2">
           <label class="form-label fw-semibold fs-7 text-gray-700 mb-0">Password</label>
-          <!-- ✅ Sudah diarahkan ke route user-password-reset -->
           <router-link to="/user/password-reset" class="fw-bold fs-7" style="color: #3b82f6;">
             Lupa Password?
           </router-link>
         </div>
         <div class="position-relative">
           <Field
+            tabindex="2"
             class="form-control form-control-lg fs-7"
             :type="showPassword ? 'text' : 'password'"
             name="password"
@@ -89,19 +73,13 @@
         </div>
       </div>
 
-      <!-- Remember Me -->
-      <div class="d-flex align-items-center mb-7">
-        <input type="checkbox" id="remember_me" class="form-check-input me-3"
-          style="width:18px; height:18px; border: 1.5px solid #cbd5e1; border-radius:4px; cursor:pointer;" />
-        <label for="remember_me" class="fw-semibold fs-7 text-gray-700 cursor-pointer">Ingat saya</label>
-      </div>
-
       <!-- Submit -->
       <button
+        tabindex="3"
         type="submit"
         ref="submitButton"
         class="btn w-100 fw-bold fs-6"
-        style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: #fff; border: none; border-radius: 10px; padding: 14px; box-shadow: 0 4px 16px rgba(59,130,246,0.3); letter-spacing: 0.01em;"
+        style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: #fff; border: none; border-radius: 10px; padding: 14px; box-shadow: 0 4px 16px rgba(59,130,246,0.3);"
       >
         <span class="indicator-label">Masuk</span>
         <span class="indicator-progress">
@@ -126,26 +104,32 @@ export default defineComponent({
   name: "user-sign-in",
   components: { Field, VForm, ErrorMessage },
   setup() {
-    const authStore = useAuthStore();
+    const store = useAuthStore();
     const router = useRouter();
     const submitButton = ref<HTMLButtonElement | null>(null);
     const showPassword = ref(false);
 
     const loginSchema = Yup.object().shape({
-      email: Yup.string().email().required().label("Email"),
+      phone: Yup.string()
+        .required("Nomor HP wajib diisi")
+        .matches(/^8[0-9]{8,12}$/, "Masukkan nomor tanpa 0 di depan, contoh: 81234567890")
+        .label("Nomor HP"),
       password: Yup.string().min(4).required().label("Password"),
     });
 
     const onSubmitLogin = async (values: any) => {
-      authStore.logout();
+      store.logout();
 
       if (submitButton.value) {
         submitButton.value.disabled = true;
         submitButton.value.setAttribute("data-kt-indicator", "on");
       }
 
-      await authStore.login(values);
-      const error = Object.values(authStore.errors);
+      // Kirim dengan prefix +62
+      const phone = "+62" + values.phone;
+      await store.login({ phone, password: values.password });
+
+      const error = Object.values(store.errors);
 
       if (error.length === 0) {
         Swal.fire({
@@ -167,7 +151,7 @@ export default defineComponent({
           heightAuto: false,
           customClass: { confirmButton: "btn fw-semibold btn-light-danger" },
         }).then(() => {
-          authStore.errors = {};
+          store.errors = {};
         });
       }
 

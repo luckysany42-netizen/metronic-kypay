@@ -95,7 +95,8 @@
                 <td class="ps-4">
                   <div class="d-flex align-items-center gap-3">
                     <div class="symbol symbol-35px">
-                      <img v-if="item.user.avatar" :src="item.user.avatar" alt="" />
+                      <!-- ✅ pakai avatarUrl() helper agar path relatif di-prefix storage URL -->
+                      <img v-if="item.user.avatar" :src="avatarUrl(item.user.avatar)" alt="" class="rounded-circle" style="width:35px;height:35px;object-fit:cover;" />
                       <span v-else class="symbol-label bg-light-primary text-primary fw-bold">
                         {{ item.user.name?.charAt(0) }}
                       </span>
@@ -181,8 +182,8 @@
               </div>
               <div class="col-12" v-if="selectedItem.proof_image">
                 <div class="fw-bold text-muted fs-8 mb-2">BUKTI TRANSFER</div>
-                <a :href="selectedItem.proof_image" target="_blank">
-                  <img :src="selectedItem.proof_image" alt="Bukti Transfer" class="rounded-2 mw-100 mh-300px" />
+                <a :href="avatarUrl(selectedItem.proof_image)" target="_blank">
+                  <img :src="avatarUrl(selectedItem.proof_image)" alt="Bukti Transfer" class="rounded-2 mw-100 mh-300px" />
                 </a>
               </div>
               <div class="col-12" v-if="selectedItem.user_note">
@@ -287,6 +288,18 @@ const adminNote = ref("");
 const formatRupiah = (val: number) => "Rp " + Number(val || 0).toLocaleString("id-ID");
 const formatDate = (date: string) =>
   new Date(date).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+
+/**
+ * ✅ Helper: pastikan avatar/gambar selalu punya full URL
+ * - Jika sudah http/https → pakai langsung (misal dari upload lama)
+ * - Jika path relatif (avatars/xxx.jpg) → prefix dengan storage URL
+ */
+const avatarUrl = (path: string): string => {
+  if (!path) return "";
+  if (path.startsWith("http://") || path.startsWith("https://")) return path;
+  const base = import.meta.env.VITE_APP_API_URL?.replace("/api", "") ?? "http://127.0.0.1:8000";
+  return `${base}/storage/${path}`;
+};
 
 const fetchTopUps = async () => {
   loading.value = true;

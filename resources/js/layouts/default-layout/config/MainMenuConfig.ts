@@ -31,6 +31,19 @@ const MainMenuConfig: Array<MenuItem> = [
           },
         ],
       },
+      // ✅ Tambahan baru
+      {
+        sectionTitle: "Manajemen User",
+        route: "/admin",
+        keenthemesIcon: "people",
+        bootstrapIcon: "bi-people-fill",
+        sub: [
+          {
+            heading: "Daftar User",
+            route: "/admin/users",
+          },
+        ],
+      },
     ],
   },
 ];

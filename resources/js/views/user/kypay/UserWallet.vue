@@ -23,14 +23,23 @@
             </div>
           </div>
           <div class="text-end">
-            <div class="d-flex align-items-center gap-2 justify-content-end">
+            <div class="d-flex align-items-center gap-2 justify-content-end mb-1">
+              <button
+                class="btn btn-sm btn-icon"
+                style="background: rgba(255,255,255,0.15); border: none; color: white;"
+                @click="refreshAll"
+                :disabled="refreshing"
+                title="Refresh data"
+              >
+                <i class="bi bi-arrow-clockwise fs-5" :class="{ spin: refreshing }"></i>
+              </button>
               <i class="bi bi-wallet2 text-white fs-1" style="opacity: 0.8;"></i>
             </div>
-            <div class="text-white fw-bold fs-3 mt-1">KyPay</div>
+            <div class="text-white fw-bold fs-3">KyPay</div>
           </div>
         </div>
 
-        <div class="d-flex align-items-center gap-2 mt-4">
+        <div class="d-flex align-items-center gap-2 mt-4 flex-wrap">
           <div class="text-white-50 fs-8">
             <i class="bi bi-person-fill text-white-50 me-1"></i>
             {{ authStore.user?.name }}
@@ -40,6 +49,9 @@
           </div>
           <div class="text-white-50 fs-8 ms-4" v-else>
             <i class="bi bi-shield-exclamation text-warning me-1"></i> PIN Belum Diset
+          </div>
+          <div class="text-white-50 fs-9 ms-auto" v-if="lastRefreshed">
+            <i class="bi bi-check2 me-1"></i>Update: {{ lastRefreshed }}
           </div>
         </div>
       </div>
@@ -106,7 +118,10 @@
         <div class="card-title">
           <h3 class="fw-bold mb-0">Transaksi Terakhir</h3>
         </div>
-        <div class="card-toolbar">
+        <div class="card-toolbar d-flex align-items-center gap-3">
+          <button class="btn btn-sm btn-icon btn-light" @click="fetchTransactions" :disabled="loadingTransactions" title="Refresh">
+            <i class="bi bi-arrow-clockwise" :class="{ spin: loadingTransactions }"></i>
+          </button>
           <router-link :to="{ name: 'user-transactions' }" class="btn btn-sm btn-light-primary">
             Lihat Semua
           </router-link>
@@ -187,21 +202,23 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, onActivated, onUnmounted } from "vue";
 import { useAuthStore } from "@/stores/auth";
 import ApiService from "@/core/services/ApiService";
 
 const authStore = useAuthStore();
 
-const wallet = ref<any>(null);
-const transactions = ref<any[]>([]);
-const loadingWallet = ref(true);
+const wallet              = ref<any>(null);
+const transactions        = ref<any[]>([]);
+const loadingWallet       = ref(true);
 const loadingTransactions = ref(true);
+const refreshing          = ref(false);
+const lastRefreshed       = ref("");
 
 const showPinModal = ref(false);
-const pinLoading = ref(false);
-const pinError = ref("");
-const pinForm = ref({ current_pin: "", pin: "", pin_confirmation: "" });
+const pinLoading   = ref(false);
+const pinError     = ref("");
+const pinForm      = ref({ current_pin: "", pin: "", pin_confirmation: "" });
 
 const isCredit = (trx: any) =>
   trx.is_credit ?? (trx.type === "top_up" || trx.type === "transfer_in");
@@ -213,9 +230,10 @@ const formatDate = (date: string) =>
   new Date(date).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" });
 
 const trxIcon = (type: string) => {
-  if (type === "top_up") return "bi-plus-circle-fill";
-  if (type === "transfer_in") return "bi-arrow-down-circle-fill";
+  if (type === "top_up")       return "bi-plus-circle-fill";
+  if (type === "transfer_in")  return "bi-arrow-down-circle-fill";
   if (type === "transfer_out") return "bi-arrow-up-circle-fill";
+  if (type === "payment")      return "bi-cart-fill";
   return "bi-circle-fill";
 };
 
@@ -223,10 +241,8 @@ const fetchWallet = async () => {
   loadingWallet.value = true;
   try {
     const { data } = await ApiService.get("wallet", "");
-    // Handle berbagai struktur response
     wallet.value = data.data ?? data.wallet ?? data ?? null;
-  } catch (e) {
-    console.error(e);
+  } catch {
     wallet.value = null;
   } finally {
     loadingWallet.value = false;
@@ -234,24 +250,29 @@ const fetchWallet = async () => {
 };
 
 const fetchTransactions = async () => {
+  loadingTransactions.value = true;
   try {
     const { data } = await ApiService.get("wallet", "transactions");
-    transactions.value = data.data;
-  } catch (e) {
-    console.error(e);
+    transactions.value = data.data ?? [];
+  } catch {
+    transactions.value = [];
   } finally {
     loadingTransactions.value = false;
   }
 };
 
+const refreshAll = async () => {
+  refreshing.value = true;
+  await Promise.all([fetchWallet(), fetchTransactions()]);
+  refreshing.value = false;
+  const now = new Date();
+  lastRefreshed.value = now.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
+};
+
 const submitPin = async () => {
   pinError.value = "";
-  if (pinForm.value.pin.length !== 6) {
-    pinError.value = "PIN harus 6 digit."; return;
-  }
-  if (pinForm.value.pin !== pinForm.value.pin_confirmation) {
-    pinError.value = "Konfirmasi PIN tidak cocok."; return;
-  }
+  if (pinForm.value.pin.length !== 6) { pinError.value = "PIN harus 6 digit."; return; }
+  if (pinForm.value.pin !== pinForm.value.pin_confirmation) { pinError.value = "Konfirmasi PIN tidak cocok."; return; }
   pinLoading.value = true;
   try {
     await ApiService.post("wallet/set-pin", pinForm.value);
@@ -265,8 +286,26 @@ const submitPin = async () => {
   }
 };
 
+// Refresh saat window fokus (kembali dari tab/halaman lain di browser)
+const onWindowFocus = () => refreshAll();
+
 onMounted(() => {
-  fetchWallet();
-  fetchTransactions();
+  refreshAll();
+  window.addEventListener("focus", onWindowFocus);
+});
+
+// Refresh saat navigasi balik via Vue Router (keep-alive)
+onActivated(() => refreshAll());
+
+onUnmounted(() => {
+  window.removeEventListener("focus", onWindowFocus);
 });
 </script>
+
+<style scoped>
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+.spin { animation: spin 0.8s linear infinite; display: inline-block; }
+</style>

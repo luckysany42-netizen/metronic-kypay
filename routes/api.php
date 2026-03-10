@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\TransferController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\Admin\AdminTopUpController;
 use App\Http\Controllers\Api\Admin\AdminPaymentController;
+use App\Http\Controllers\Api\Admin\AdminUserController;
 
 // ================================================================
 // PUBLIC ROUTES — tidak perlu token
@@ -104,5 +105,12 @@ Route::middleware(['auth.token', 'role:admin'])->prefix('admin')->group(function
 
     // --- All Transactions ---
     Route::get('/transactions', [AdminPaymentController::class, 'transactions']);
+
+    // ✅ --- Manajemen User ---
+    Route::prefix('users')->group(function () {
+        Route::get('/',              [AdminUserController::class, 'index']);
+        Route::post('/{id}/suspend',   [AdminUserController::class, 'suspend']);
+        Route::post('/{id}/unsuspend', [AdminUserController::class, 'unsuspend']);
+    });
 
 });

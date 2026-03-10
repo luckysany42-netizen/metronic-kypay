@@ -100,6 +100,13 @@ const routes: Array<RouteRecordRaw> = [
         component: () => import("@/views/admin/kypay/AdminPaymentMethods.vue"),
         meta: { pageTitle: "Metode Pembayaran", breadcrumbs: ["KyPay"], middleware: "auth" },
       },
+      // ✅ Manajemen User
+      {
+        path: "/admin/users",
+        name: "admin-users",
+        component: () => import("@/views/admin/kypay/AdminUsers.vue"),
+        meta: { pageTitle: "Manajemen User", breadcrumbs: ["KyPay"], middleware: "auth" },
+      },
     ],
   },
 
@@ -154,7 +161,6 @@ const routes: Array<RouteRecordRaw> = [
         component: () => import("@/views/user/kypay/UserTransactions.vue"),
         meta: { pageTitle: "Riwayat Transaksi", middleware: "auth-user" },
       },
-      // ✅ PAYMENT — Bayar & Beli
       {
         path: "/user/payment",
         name: "user-payment",
@@ -169,7 +175,6 @@ const routes: Array<RouteRecordRaw> = [
     path: "/",
     component: () => import("@/layouts/AuthLayout.vue"),
     children: [
-      // --- Admin Auth ---
       {
         path: "/sign-in",
         name: "sign-in",
@@ -194,8 +199,6 @@ const routes: Array<RouteRecordRaw> = [
         component: () => import("@/views/crafted/authentication/basic-flow/NewPassword.vue"),
         meta: { pageTitle: "Reset Password" },
       },
-
-      // --- User Auth ---
       {
         path: "/user/sign-in",
         name: "user-sign-in",
@@ -214,8 +217,6 @@ const routes: Array<RouteRecordRaw> = [
         component: () => import("@/views/crafted/authentication/basic-flow/PasswordReset.vue"),
         meta: { pageTitle: "Lupa Password" },
       },
-
-      // SET PIN — setelah register, sebelum login
       {
         path: "/user/set-pin",
         name: "user-set-pin",

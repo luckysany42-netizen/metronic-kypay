@@ -40,7 +40,7 @@
       class="form w-100"
       id="kt_login_signin_form"
       @submit="onSubmitLogin"
-      :validation-schema="login"
+      :validation-schema="loginSchema"
     >
       <!-- Email -->
       <div class="fv-row mb-5">
@@ -134,13 +134,12 @@ export default defineComponent({
     const submitButton = ref<HTMLButtonElement | null>(null);
     const showPassword = ref(false);
 
-    const login = Yup.object().shape({
-      email: Yup.string().email().required().label("Email"),
-      password: Yup.string().min(4).required().label("Password"),
+    const loginSchema = Yup.object().shape({
+      email: Yup.string().email("Format email tidak valid").required("Email wajib diisi").label("Email"),
+      password: Yup.string().min(4).required("Password wajib diisi").label("Password"),
     });
 
     const onSubmitLogin = async (values: any) => {
-      values = values as User;
       store.logout();
 
       if (submitButton.value) {
@@ -148,7 +147,8 @@ export default defineComponent({
         submitButton.value.setAttribute("data-kt-indicator", "on");
       }
 
-      await store.login(values);
+      // ✅ Pakai adminLogin — kirim ke /api/admin/login (email based)
+      await store.adminLogin(values);
       const error = Object.values(store.errors);
 
       if (error.length === 0) {
@@ -160,12 +160,7 @@ export default defineComponent({
           heightAuto: false,
           customClass: { confirmButton: "btn fw-semibold btn-light-primary" },
         }).then(() => {
-          // Redirect berdasarkan role
-          if (store.isAdmin()) {
-            router.push({ name: "dashboard" });
-          } else {
-            router.push({ name: "user-dashboard" });
-          }
+          router.push({ name: "dashboard" });
         });
       } else {
         Swal.fire({
@@ -184,7 +179,7 @@ export default defineComponent({
       submitButton.value!.disabled = false;
     };
 
-    return { onSubmitLogin, login, submitButton, showPassword, getAssetPath };
+    return { onSubmitLogin, loginSchema, submitButton, showPassword, getAssetPath };
   },
 });
 </script>

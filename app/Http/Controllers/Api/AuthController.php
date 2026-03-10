@@ -16,11 +16,33 @@ class AuthController extends Controller
 {
     public function login(Request $request)
     {
-        $request->validate(['email' => 'required|email', 'password' => 'required']);
-        $user = User::where('email', $request->email)->first();
-        if (!$user || !Hash::check($request->password, $user->password)) {
-            return response()->json(['errors' => ['login' => 'Email atau password salah']], 401);
+        $request->validate([
+            'phone'    => 'required|string',
+            'password' => 'required',
+        ]);
+
+        // Bersihkan semua karakter non-digit kecuali +
+        $input = preg_replace('/[^0-9]/', '', $request->phone);
+
+        // Normalisasi ke +62xxx
+        if (str_starts_with($input, '62')) {
+            $normalized = '+' . $input;
+        } elseif (str_starts_with($input, '0')) {
+            $normalized = '+62' . substr($input, 1);
+        } else {
+            $normalized = '+62' . $input;
         }
+
+        // Cari user — coba berbagai format
+        $user = User::where('phone', $normalized)
+            ->orWhere('phone', $input)
+            ->orWhere('phone', '0' . substr($input, 2)) // 08xx
+            ->first();
+
+        if (!$user || !Hash::check($request->password, $user->password)) {
+            return response()->json(['errors' => ['login' => 'Nomor HP atau password salah']], 401);
+        }
+
         $user->api_token = Str::random(60);
         $user->save();
         return response()->json($user);
@@ -46,6 +68,7 @@ class AuthController extends Controller
         $request->validate([
             'first_name' => 'required|string|max:255',
             'last_name'  => 'required|string|max:255',
+            'phone'      => 'required|string|max:20|unique:users,phone',
             'email'      => 'required|email|unique:users,email',
             'password'   => 'required|min:8|confirmed',
         ]);
@@ -53,6 +76,7 @@ class AuthController extends Controller
         $user = User::create([
             'name'      => $request->first_name . ' ' . $request->last_name,
             'email'     => $request->email,
+            'phone'     => $request->phone,
             'password'  => Hash::make($request->password),
             'api_token' => Str::random(60),
             'role'      => 'user',
