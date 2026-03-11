@@ -189,4 +189,47 @@ class WalletController extends Controller
             ],
         ]);
     }
+
+    /**
+     * POST /api/wallet/set-initial-pin
+     * Khusus saat register — token dikirim via body (belum login)
+     */
+    public function setInitialPin(Request $request)
+    {
+        // Ambil user dari api_token di body (karena belum login / tidak ada header)
+        $token = $request->input('api_token');
+        if (!$token) {
+            return response()->json(['success' => false, 'message' => 'Token tidak ditemukan.'], 401);
+        }
+
+        $user = \App\Models\User::where('api_token', $token)->first();
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Token tidak valid.'], 401);
+        }
+
+        $wallet = $user->wallet;
+        if (!$wallet) {
+            return response()->json(['success' => false, 'message' => 'Wallet tidak ditemukan.'], 404);
+        }
+
+        if ($wallet->pin_set) {
+            return response()->json(['success' => false, 'message' => 'PIN sudah pernah dibuat. Gunakan fitur Ganti PIN.'], 422);
+        }
+
+        $request->validate([
+            'pin'              => 'required|string|size:6|regex:/^[0-9]{6}$/',
+            'pin_confirmation' => 'required|same:pin',
+        ]);
+
+        $wallet->update([
+            'pin'     => \Illuminate\Support\Facades\Hash::make($request->pin),
+            'pin_set' => true,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'PIN berhasil dibuat. Silakan masuk.',
+        ]);
+    }
+
 }
