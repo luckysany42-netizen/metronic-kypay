@@ -1,5 +1,4 @@
 <template>
-  <!--begin::Menu wrapper-->
   <div
     v-if="headerMenuDisplay"
     class="app-header-menu app-header-mobile-drawer align-items-stretch"
@@ -14,7 +13,6 @@
     data-kt-swapper-mode="{default: 'append', lg: 'prepend'}"
     data-kt-swapper-parent="{default: '#kt_app_body', lg: '#kt_app_header_wrapper'}"
   >
-    <!--begin::Menu-->
     <div
       class="menu menu-rounded menu-column menu-lg-row my-5 my-lg-0 align-items-stretch fw-semibold px-2 px-lg-0"
       id="kt_app_header_menu"
@@ -22,10 +20,9 @@
     >
       <KTMenuPages />
     </div>
-    <!--end::Menu-->
   </div>
-  <div v-else class="align-items-stretch"></div>
-  <!--end::Menu wrapper-->
+  <!-- ✅ flex-grow-1 supaya navbar kanan tetap di kanan saat menu disembunyikan -->
+  <div v-else class="d-flex align-items-stretch flex-grow-1"></div>
 </template>
 
 <script lang="ts">
