@@ -167,6 +167,18 @@ const routes: Array<RouteRecordRaw> = [
         component: () => import("@/views/user/kypay/UserPayment.vue"),
         meta: { pageTitle: "Bayar & Beli", middleware: "auth-user" },
       },
+      {
+        path: "/user/qr-receive",
+        name: "user-qr-receive",
+        component: () => import("@/views/user/kypay/UserQrReceive.vue"),
+        meta: { pageTitle: "Terima Pembayaran QR", middleware: "auth-user" },
+      },
+      {
+        path: "/user/qr-scan",
+        name: "user-qr-scan",
+        component: () => import("@/views/user/kypay/UserQrScan.vue"),
+        meta: { pageTitle: "Scan & Bayar QR", middleware: "auth-user" },
+      },
     ],
   },
 

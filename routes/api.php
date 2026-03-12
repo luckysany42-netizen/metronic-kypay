@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\Admin\AdminTopUpController;
 use App\Http\Controllers\Api\Admin\AdminPaymentController;
 use App\Http\Controllers\Api\Admin\AdminUserController;
+use App\Http\Controllers\Api\QrPaymentController;
 
 // ================================================================
 // PUBLIC ROUTES — tidak perlu token
@@ -69,6 +70,14 @@ Route::middleware(['auth.token'])->group(function () {
         Route::post('/',        [PaymentController::class, 'store']);
     });
 
+    // --- KyPay: QR Payment ---
+    Route::prefix('qr-payment')->group(function () {
+        Route::post('/generate',         [QrPaymentController::class, 'generate']);
+        Route::get('/detail/{token}',    [QrPaymentController::class, 'detail']);
+        Route::post('/pay',              [QrPaymentController::class, 'pay']);
+        Route::get('/status/{token}',    [QrPaymentController::class, 'status']);
+        Route::delete('/{token}/cancel', [QrPaymentController::class, 'cancel']);
+    });
 });
 
 // ================================================================

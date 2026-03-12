@@ -38,6 +38,16 @@ const UserMenuConfig: Array<MenuItem> = [
         keenthemesIcon: "tag",
         bootstrapIcon: "bi-grid-fill",
       },
+      {
+        sectionTitle: "QR Payment",
+        route: "/user/qr-receive",
+        keenthemesIcon: "scan-barcode",
+        bootstrapIcon: "bi-qr-code",
+        sub: [
+          { heading: "Terima Pembayaran", route: "/user/qr-receive" },
+          { heading: "Scan & Bayar",      route: "/user/qr-scan" },
+        ],
+      },
     ],
   },
   {
