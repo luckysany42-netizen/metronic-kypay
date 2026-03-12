@@ -169,9 +169,11 @@ class QrPaymentController extends Controller
                 $payerWallet->decrement('balance', $qr->amount);
                 $payerWallet->update(['last_transaction_at' => now()]);
 
-                // Tambah saldo merchant
-                $merchantWallet->increment('balance', $qr->amount);
-                $merchantWallet->update(['last_transaction_at' => now()]);
+                // Tambah saldo merchant HANYA jika beda user
+                if ($qr->merchant_id !== $payer->id) {
+                    $merchantWallet->increment('balance', $qr->amount);
+                    $merchantWallet->update(['last_transaction_at' => now()]);
+                }
 
                 $trxNumber = Transaction::generateTransactionNumber();
 
@@ -197,23 +199,25 @@ class QrPaymentController extends Controller
                     'reference_id'       => $qr->id,
                 ]);
 
-                // Catat transaksi merchant (kredit)
-                Transaction::create([
-                    'wallet_id'          => $merchantWallet->id,
-                    'related_wallet_id'  => $payerWallet->id,
-                    'transaction_number' => Transaction::generateTransactionNumber(),
-                    'type'               => 'transfer_in',
-                    'amount'             => $qr->amount,
-                    'fee'                => 0,
-                    'balance_before'     => $merchantWallet->balance - $qr->amount,
-                    'balance_after'      => $merchantWallet->balance,
-                    'status'             => 'success',
-                    'description'        => $isBillPayment
-                        ? 'QR Bayar & Beli diterima dari ' . $payer->name
-                        : 'QR Payment diterima dari ' . $payer->name,
-                    'reference_type'     => 'qr_payment',
-                    'reference_id'       => $qr->id,
-                ]);
+                // Catat transaksi merchant (kredit) HANYA jika beda user
+                if ($qr->merchant_id !== $payer->id) {
+                    Transaction::create([
+                        'wallet_id'          => $merchantWallet->id,
+                        'related_wallet_id'  => $payerWallet->id,
+                        'transaction_number' => Transaction::generateTransactionNumber(),
+                        'type'               => 'transfer_in',
+                        'amount'             => $qr->amount,
+                        'fee'                => 0,
+                        'balance_before'     => $merchantWallet->balance - $qr->amount,
+                        'balance_after'      => $merchantWallet->balance,
+                        'status'             => 'success',
+                        'description'        => $isBillPayment
+                            ? 'QR Bayar & Beli diterima dari ' . $payer->name
+                            : 'QR Payment diterima dari ' . $payer->name,
+                        'reference_type'     => 'qr_payment',
+                        'reference_id'       => $qr->id,
+                    ]);
+                }
 
                 // Proses produk jika ini Bayar & Beli via QR
                 $billResult = null;

@@ -272,6 +272,8 @@ const submitTransfer = async () => {
       note: form.value.note,
     });
     successRef.value = data.data?.reference_number ?? data.reference_number ?? "-";
+    // ✅ Update saldo setelah transfer berhasil
+    currentBalance.value = currentBalance.value - Number(form.value.amount);
     step.value = 3;
   } catch (e: any) {
     errorMsg.value =
