@@ -63,7 +63,12 @@
             <KTToolbar />
             <div id="kt_app_content" class="app-content flex-column-fluid">
               <div class="app-container container-fluid">
-                <router-view />
+                <!-- KeepAlive supaya UserTransfer tidak reset saat pindah halaman -->
+                <router-view v-slot="{ Component }">
+                  <keep-alive :include="['UserTransfer']">
+                    <component :is="Component" />
+                  </keep-alive>
+                </router-view>
               </div>
             </div>
           </div>

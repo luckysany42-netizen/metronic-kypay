@@ -26,22 +26,40 @@
         <h3 class="card-title fw-bold">Masukkan Kode QR</h3>
       </div>
       <div class="card-body pt-2">
+
         <!-- Scanner area -->
         <div class="text-center mb-6">
-          <div class="scanner-box mx-auto mb-4" @click="triggerFileInput">
+          <div class="scanner-box mx-auto mb-4" @click="triggerFileInput" :class="{ 'scanning': scanLoading }">
             <div class="scanner-frame">
               <div class="qr-corner tl"></div>
               <div class="qr-corner tr"></div>
               <div class="qr-corner bl"></div>
               <div class="qr-corner br"></div>
-              <div class="qr-scan-line"></div>
-              <div class="scanner-hint">
+              <div class="qr-scan-line" v-if="!scanLoading"></div>
+              <div class="scanner-hint" v-if="!scanLoading">
                 <i class="bi bi-camera fs-1 text-white opacity-75 d-block mb-2"></i>
-                <span class="text-white fs-8 fw-semibold opacity-75">Tap untuk scan via kamera</span>
+                <span class="text-white fs-8 fw-semibold opacity-75">Tap untuk upload foto QR</span>
+              </div>
+              <div class="scanner-hint" v-else>
+                <div class="spinner-border text-info mb-2" role="status"></div>
+                <span class="text-white fs-8 fw-semibold opacity-75">Membaca QR...</span>
               </div>
             </div>
           </div>
-          <input ref="fileInput" type="file" accept="image/*" capture="environment" class="d-none" @change="onFileCapture" />
+
+          <input
+            ref="fileInput"
+            type="file"
+            accept="image/*"
+            class="d-none"
+            @change="onFileCapture"
+          />
+
+          <!-- Error scan -->
+          <div v-if="scanError" class="alert alert-danger py-2 fs-8 mt-2 mx-auto" style="max-width:320px;">
+            <i class="bi bi-exclamation-triangle me-1"></i>{{ scanError }}
+          </div>
+
           <div class="text-muted fs-8 mb-1">— atau —</div>
         </div>
 
@@ -56,6 +74,7 @@
               :class="tokenError ? 'is-invalid' : ''"
               placeholder="Paste token QR di sini..."
               @input="tokenError = ''"
+              @keyup.enter="fetchDetail"
             />
             <button class="btn btn-primary px-6" @click="fetchDetail" :disabled="loadingDetail || !manualToken.trim()">
               <span v-if="loadingDetail" class="spinner-border spinner-border-sm"></span>
@@ -186,32 +205,106 @@
 import { ref, onMounted, onUnmounted } from "vue";
 import ApiService from "@/core/services/ApiService";
 
-const step          = ref(1);
-const loading       = ref(false);
-const loadingDetail = ref(false);
-const manualToken   = ref("");
-const tokenError    = ref("");
-const errorMsg      = ref("");
-const pin           = ref("");
+const step           = ref(1);
+const loading        = ref(false);
+const loadingDetail  = ref(false);
+const scanLoading    = ref(false);
+const scanError      = ref("");
+const manualToken    = ref("");
+const tokenError     = ref("");
+const errorMsg       = ref("");
+const pin            = ref("");
 const currentBalance = ref(0);
-const qrDetail      = ref<any>(null);
-const successData   = ref<any>(null);
-const timeLeft      = ref(300);
-const fileInput     = ref<HTMLInputElement | null>(null);
+const qrDetail       = ref<any>(null);
+const successData    = ref<any>(null);
+const timeLeft       = ref(300);
+const fileInput      = ref<HTMLInputElement | null>(null);
 
 let countdownInterval: ReturnType<typeof setInterval> | null = null;
 
 const formatRupiah = (val: any) => "Rp " + Number(val || 0).toLocaleString("id-ID");
 const formatTime   = (s: number) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
 
-const triggerFileInput = () => fileInput.value?.click();
+const triggerFileInput = () => {
+  scanError.value = "";
+  fileInput.value?.click();
+};
+
+// Load jsQR dari CDN secara dinamis
+const loadJsQR = (): Promise<any> => {
+  return new Promise((resolve, reject) => {
+    // Kalau sudah ada, langsung pakai
+    if ((window as any).jsQR) {
+      resolve((window as any).jsQR);
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = "https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js";
+    script.onload = () => resolve((window as any).jsQR);
+    script.onerror = () => reject(new Error("Gagal load library jsQR"));
+    document.head.appendChild(script);
+  });
+};
+
+// Decode QR dari file gambar menggunakan jsQR
+const decodeQrFromImage = (file: File): Promise<string> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const jsQR = await loadJsQR();
+
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.src = url;
+
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width  = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext("2d")!;
+        ctx.drawImage(img, 0, 0);
+        URL.revokeObjectURL(url);
+
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const code = jsQR(imageData.data, imageData.width, imageData.height, {
+          inversionAttempts: "dontInvert",
+        });
+
+        if (code?.data) {
+          resolve(code.data);
+        } else {
+          reject(new Error("QR Code tidak terdeteksi. Coba foto lebih jelas dan pastikan seluruh QR terlihat."));
+        }
+      };
+
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        reject(new Error("Gagal membaca file gambar."));
+      };
+    } catch (e: any) {
+      reject(e);
+    }
+  });
+};
 
 const onFileCapture = async (e: Event) => {
-  // Jika menggunakan library html5-qrcode di masa depan, proses di sini
-  // Untuk saat ini redirect ke input manual
   const file = (e.target as HTMLInputElement).files?.[0];
   if (!file) return;
-  alert("Fitur scan kamera memerlukan library html5-qrcode.\nGunakan input token manual untuk saat ini.");
+
+  // Reset input agar bisa upload file yang sama lagi
+  (e.target as HTMLInputElement).value = "";
+
+  scanError.value  = "";
+  scanLoading.value = true;
+
+  try {
+    const token = await decodeQrFromImage(file);
+    manualToken.value = token;
+    await fetchDetail();
+  } catch (err: any) {
+    scanError.value = err.message ?? "Gagal membaca QR dari gambar.";
+  } finally {
+    scanLoading.value = false;
+  }
 };
 
 const fetchDetail = async () => {
@@ -274,6 +367,7 @@ const resetForm = () => {
   pin.value = "";
   errorMsg.value = "";
   tokenError.value = "";
+  scanError.value = "";
   qrDetail.value = null;
   successData.value = null;
   timeLeft.value = 300;
@@ -281,6 +375,9 @@ const resetForm = () => {
 };
 
 onMounted(async () => {
+  // Pre-load jsQR supaya lebih cepat saat dipakai
+  loadJsQR().catch(() => {});
+
   try {
     const { data } = await ApiService.get("wallet", "");
     currentBalance.value = Number(data.data?.balance ?? 0);
@@ -299,9 +396,10 @@ onUnmounted(() => {
   padding: 2rem;
   cursor: pointer;
   max-width: 280px;
-  transition: opacity 0.2s;
+  transition: opacity 0.2s, transform 0.2s;
 }
-.scanner-box:hover { opacity: 0.88; }
+.scanner-box:hover { opacity: 0.88; transform: scale(1.01); }
+.scanner-box.scanning { opacity: 0.7; cursor: wait; }
 .scanner-frame {
   position: relative;
   width: 180px;

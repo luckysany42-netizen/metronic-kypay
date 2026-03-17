@@ -40,12 +40,11 @@ const UserMenuConfig: Array<MenuItem> = [
       },
       {
         sectionTitle: "QR Payment",
-        route: "/user/qr-receive",
+        route: "/user/qr-scan",
         keenthemesIcon: "scan-barcode",
         bootstrapIcon: "bi-qr-code",
         sub: [
-          { heading: "Terima Pembayaran", route: "/user/qr-receive" },
-          { heading: "Scan & Bayar",      route: "/user/qr-scan" },
+          { heading: "Scan & Bayar", route: "/user/qr-scan" },
         ],
       },
     ],

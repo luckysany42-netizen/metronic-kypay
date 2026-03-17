@@ -18,33 +18,20 @@ class AdminPaymentController extends Controller
     // DASHBOARD STATS
     // =====================================================
 
-    /**
-     * GET /api/admin/payment/dashboard
-     * Statistik utama KyPay untuk admin dashboard
-     */
     public function dashboard()
     {
         $stats = [
-            // Wallet stats
-            'total_wallets'          => Wallet::count(),
-            'active_wallets'         => Wallet::where('status', 'active')->count(),
-            'suspended_wallets'      => Wallet::where('status', 'suspended')->count(),
-            'total_balance_in_system'=> Wallet::sum('balance'), // total uang di seluruh wallet
-
-            // Transaction stats
-            'total_transactions'     => Transaction::count(),
-            'total_topup_amount'     => Transaction::where('type', 'top_up')->where('status', 'success')->sum('amount'),
-            'total_transfer_amount'  => Transaction::where('type', 'transfer_out')->where('status', 'success')->sum('amount'),
-
-            // Top Up Request stats
-            'pending_topup'          => TopUpRequest::where('status', 'pending')->count(),
-            'approved_topup_today'   => TopUpRequest::where('status', 'approved')->whereDate('reviewed_at', today())->count(),
-
-            // Transfer stats
-            'total_transfers_today'  => TransferRequest::where('status', 'success')->whereDate('processed_at', today())->count(),
-
-            // Recent activity
-            'recent_topup_requests'  => TopUpRequest::with('user:id,name,avatar')
+            'total_wallets'           => Wallet::count(),
+            'active_wallets'          => Wallet::where('status', 'active')->count(),
+            'suspended_wallets'       => Wallet::where('status', 'suspended')->count(),
+            'total_balance_in_system' => Wallet::sum('balance'),
+            'total_transactions'      => Transaction::count(),
+            'total_topup_amount'      => Transaction::where('type', 'top_up')->where('status', 'success')->sum('amount'),
+            'total_transfer_amount'   => Transaction::where('type', 'transfer_out')->where('status', 'success')->sum('amount'),
+            'pending_topup'           => TopUpRequest::where('status', 'pending')->count(),
+            'approved_topup_today'    => TopUpRequest::where('status', 'approved')->whereDate('reviewed_at', today())->count(),
+            'total_transfers_today'   => TransferRequest::where('status', 'success')->whereDate('processed_at', today())->count(),
+            'recent_topup_requests'   => TopUpRequest::with('user:id,name,avatar')
                 ->where('status', 'pending')
                 ->orderBy('created_at', 'desc')
                 ->take(5)
@@ -59,20 +46,13 @@ class AdminPaymentController extends Controller
                 ]),
         ];
 
-        return response()->json([
-            'success' => true,
-            'data'    => $stats,
-        ]);
+        return response()->json(['success' => true, 'data' => $stats]);
     }
 
     // =====================================================
     // WALLET MANAGEMENT
     // =====================================================
 
-    /**
-     * GET /api/admin/wallets
-     * Semua wallet user dengan filter
-     */
     public function wallets(Request $request)
     {
         $query = Wallet::with('user:id,name,email,avatar')
@@ -122,15 +102,9 @@ class AdminPaymentController extends Controller
         ]);
     }
 
-    /**
-     * PATCH /api/admin/wallets/{id}/status
-     * Suspend atau aktifkan wallet user
-     */
     public function updateWalletStatus(Request $request, int $id)
     {
-        $request->validate([
-            'status' => 'required|in:active,suspended,closed',
-        ]);
+        $request->validate(['status' => 'required|in:active,suspended,closed']);
 
         $wallet = Wallet::findOrFail($id);
         $wallet->update(['status' => $request->status]);
@@ -142,10 +116,6 @@ class AdminPaymentController extends Controller
         ]);
     }
 
-    /**
-     * PATCH /api/admin/wallets/{id}/limit
-     * Update limit transaksi harian wallet
-     */
     public function updateWalletLimit(Request $request, int $id)
     {
         $request->validate([
@@ -156,20 +126,13 @@ class AdminPaymentController extends Controller
         $wallet = Wallet::findOrFail($id);
         $wallet->update($request->only(['daily_transfer_limit', 'daily_topup_limit']));
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Limit wallet berhasil diperbarui.',
-        ]);
+        return response()->json(['success' => true, 'message' => 'Limit wallet berhasil diperbarui.']);
     }
 
     // =====================================================
     // PAYMENT METHODS MANAGEMENT
     // =====================================================
 
-    /**
-     * GET /api/admin/payment-methods
-     * Semua metode pembayaran (termasuk yang nonaktif)
-     */
     public function paymentMethods()
     {
         $methods = PaymentMethod::with('creator:id,name')
@@ -198,10 +161,6 @@ class AdminPaymentController extends Controller
         return response()->json(['success' => true, 'data' => $methods]);
     }
 
-    /**
-     * POST /api/admin/payment-methods
-     * Tambah metode pembayaran baru
-     */
     public function storePaymentMethod(Request $request)
     {
         $request->validate([
@@ -236,10 +195,6 @@ class AdminPaymentController extends Controller
         ], 201);
     }
 
-    /**
-     * PUT /api/admin/payment-methods/{id}
-     * Update metode pembayaran
-     */
     public function updatePaymentMethod(Request $request, int $id)
     {
         $method = PaymentMethod::findOrFail($id);
@@ -260,11 +215,21 @@ class AdminPaymentController extends Controller
             'sort_order'     => 'nullable|integer',
         ]);
 
-        $data = $request->except('logo');
+        $data = $request->except(['logo', 'remove_logo']);
 
+        // ✅ Hapus logo jika diminta
+        if ($request->input('remove_logo') == '1') {
+            if ($method->logo) {
+                Storage::disk('public')->delete($method->logo);
+            }
+            $data['logo'] = null;
+        }
+
+        // ✅ Upload logo baru jika ada
         if ($request->hasFile('logo')) {
-            // Hapus logo lama
-            if ($method->logo) Storage::disk('public')->delete($method->logo);
+            if ($method->logo) {
+                Storage::disk('public')->delete($method->logo);
+            }
             $data['logo'] = $request->file('logo')->store('kypay/payment-logos', 'public');
         }
 
@@ -276,10 +241,6 @@ class AdminPaymentController extends Controller
         ]);
     }
 
-    /**
-     * DELETE /api/admin/payment-methods/{id}
-     * Hapus metode pembayaran
-     */
     public function destroyPaymentMethod(int $id)
     {
         $method = PaymentMethod::findOrFail($id);
@@ -290,20 +251,13 @@ class AdminPaymentController extends Controller
 
         $method->delete();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Metode pembayaran berhasil dihapus.',
-        ]);
+        return response()->json(['success' => true, 'message' => 'Metode pembayaran berhasil dihapus.']);
     }
 
     // =====================================================
     // ALL TRANSACTIONS (ADMIN VIEW)
     // =====================================================
 
-    /**
-     * GET /api/admin/transactions
-     * Semua transaksi di sistem (bisa filter)
-     */
     public function transactions(Request $request)
     {
         $query = Transaction::with('wallet.user:id,name,avatar')
@@ -312,11 +266,9 @@ class AdminPaymentController extends Controller
         if ($request->type) {
             $query->where('type', $request->type);
         }
-
         if ($request->date_from) {
             $query->whereDate('created_at', '>=', $request->date_from);
         }
-
         if ($request->date_to) {
             $query->whereDate('created_at', '<=', $request->date_to);
         }

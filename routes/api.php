@@ -109,6 +109,7 @@ Route::middleware(['auth.token', 'role:admin'])->prefix('admin')->group(function
         Route::get('/',        [AdminPaymentController::class, 'paymentMethods']);
         Route::post('/',       [AdminPaymentController::class, 'storePaymentMethod']);
         Route::put('/{id}',    [AdminPaymentController::class, 'updatePaymentMethod']);
+        Route::post('/{id}',   [AdminPaymentController::class, 'updatePaymentMethod']); // ✅ tambah ini untuk FormData + _method spoofing
         Route::delete('/{id}', [AdminPaymentController::class, 'destroyPaymentMethod']);
     });
 

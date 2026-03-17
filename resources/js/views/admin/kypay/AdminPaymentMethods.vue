@@ -22,7 +22,14 @@
             <div class="card-body p-6">
               <div class="d-flex justify-content-between align-items-start mb-4">
                 <div class="symbol symbol-45px">
-                  <span class="symbol-label" :style="{ backgroundColor: (method.color || '#009ef7') + '20' }">
+                  <img
+                    v-if="method.logo"
+                    :src="method.logo"
+                    alt=""
+                    class="rounded-circle object-fit-cover w-45px h-45px"
+                    style="border: 2px solid #f1f1f1;"
+                  />
+                  <span v-else class="symbol-label" :style="{ backgroundColor: (method.color || '#009ef7') + '20' }">
                     <i class="bi bi-bank fs-3" :style="{ color: method.color || '#009ef7' }"></i>
                   </span>
                 </div>
@@ -61,7 +68,7 @@
 
     <!-- Modal Form -->
     <div v-if="formModal" class="modal fade show d-block" style="background:rgba(0,0,0,0.5)" @click.self="formModal = false">
-      <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title">{{ editingId ? 'Edit' : 'Tambah' }} Metode Pembayaran</h5>
@@ -69,6 +76,43 @@
           </div>
           <div class="modal-body">
             <div class="row g-5">
+
+              <!-- Upload Logo -->
+              <div class="col-12">
+                <label class="form-label fw-bold">Logo / Ikon Metode Pembayaran</label>
+                <div class="d-flex align-items-center gap-5">
+                  <div class="symbol symbol-70px flex-shrink-0">
+                    <img
+                      v-if="logoPreview"
+                      :src="logoPreview"
+                      alt="Preview"
+                      class="rounded-circle object-fit-cover w-70px h-70px"
+                      style="border: 2px solid #e4e6ef;"
+                    />
+                    <span v-else class="symbol-label bg-light-primary" :style="form.color ? { backgroundColor: form.color + '20' } : {}">
+                      <i class="bi bi-image fs-2" :style="form.color ? { color: form.color } : { color: '#009ef7' }"></i>
+                    </span>
+                  </div>
+                  <div class="flex-grow-1">
+                    <input
+                      ref="logoInput"
+                      type="file"
+                      accept="image/png,image/jpeg,image/jpg,image/svg+xml"
+                      class="d-none"
+                      @change="onLogoChange"
+                    />
+                    <button class="btn btn-sm btn-light-primary mb-2" @click="logoInput?.click()">
+                      <i class="bi bi-upload me-1"></i>
+                      {{ logoPreview ? 'Ganti Logo' : 'Upload Logo' }}
+                    </button>
+                    <button v-if="logoPreview" class="btn btn-sm btn-light-danger ms-2 mb-2" @click="removeLogo">
+                      <i class="bi bi-x-circle me-1"></i>Hapus
+                    </button>
+                    <div class="text-muted fs-8">Format: PNG, JPG, SVG. Maks: 1MB. Disarankan ukuran 100x100px</div>
+                  </div>
+                </div>
+              </div>
+
               <div class="col-md-6">
                 <label class="form-label required">Nama</label>
                 <input v-model="form.name" type="text" class="form-control form-control-solid" placeholder="Contoh: BCA Transfer" />
@@ -143,12 +187,18 @@
 import { ref, onMounted } from "vue";
 import ApiService from "@/core/services/ApiService";
 
-const loading = ref(true);
+const loading       = ref(true);
 const actionLoading = ref(false);
-const methods = ref<any[]>([]);
-const formModal = ref(false);
-const editingId = ref<number | null>(null);
-const errorMsg = ref("");
+const methods       = ref<any[]>([]);
+const formModal     = ref(false);
+const editingId     = ref<number | null>(null);
+const errorMsg      = ref("");
+
+// Logo
+const logoInput   = ref<HTMLInputElement | null>(null);
+const logoPreview = ref<string>("");
+const logoFile    = ref<File | null>(null);
+const logoRemoved = ref(false); // ✅ track apakah user hapus logo
 
 const defaultForm = () => ({
   name: "", code: "", type: "bank_transfer", color: "#009ef7",
@@ -160,6 +210,29 @@ const form = ref(defaultForm());
 
 const formatRupiah = (val: number) => "Rp " + Number(val || 0).toLocaleString("id-ID");
 
+// ── Logo handlers ─────────────────────────────────────
+const onLogoChange = (e: Event) => {
+  const file = (e.target as HTMLInputElement).files?.[0];
+  if (!file) return;
+
+  if (file.size > 1024 * 1024) {
+    alert("Ukuran file terlalu besar. Maksimal 1MB.");
+    return;
+  }
+
+  logoFile.value    = file;
+  logoPreview.value = URL.createObjectURL(file);
+  logoRemoved.value = false; // ada file baru, batalkan hapus
+};
+
+const removeLogo = () => {
+  logoFile.value    = null;
+  logoPreview.value = "";
+  logoRemoved.value = true; // ✅ tandai logo dihapus
+  if (logoInput.value) logoInput.value.value = "";
+};
+
+// ── Fetch ─────────────────────────────────────────────
 const fetchMethods = async () => {
   loading.value = true;
   try {
@@ -170,29 +243,63 @@ const fetchMethods = async () => {
   }
 };
 
+// ── Open modal ────────────────────────────────────────
 const openCreate = () => {
-  editingId.value = null;
-  form.value = defaultForm();
-  errorMsg.value = "";
-  formModal.value = true;
+  editingId.value   = null;
+  form.value        = defaultForm();
+  logoFile.value    = null;
+  logoPreview.value = "";
+  logoRemoved.value = false;
+  errorMsg.value    = "";
+  formModal.value   = true;
 };
 
 const openEdit = (method: any) => {
-  editingId.value = method.id;
-  form.value = { ...method };
-  errorMsg.value = "";
-  formModal.value = true;
+  editingId.value   = method.id;
+  form.value        = { ...method };
+  logoFile.value    = null;
+  logoPreview.value = method.logo ?? "";
+  logoRemoved.value = false;
+  errorMsg.value    = "";
+  formModal.value   = true;
 };
 
+// ── Submit dengan FormData ────────────────────────────
 const submitForm = async () => {
   errorMsg.value = "";
   actionLoading.value = true;
+
   try {
-    if (editingId.value) {
-      await ApiService.put(`admin/payment-methods/${editingId.value}`, form.value);
+    const formData = new FormData();
+
+    // Append semua field form — SKIP field logo karena dihandle terpisah
+  Object.entries(form.value).forEach(([key, value]) => {
+  if (key === 'logo') return; // ✅ skip, logo dihandle terpisah di bawah
+  if (value !== null && value !== undefined) {
+    if (key === 'is_active') {
+      formData.append(key, value ? '1' : '0');
     } else {
-      await ApiService.post("admin/payment-methods", form.value);
+      formData.append(key, String(value));
     }
+  }
+});
+
+    if (logoFile.value) {
+      // ✅ Ada file baru → upload logo baru
+      formData.append("logo", logoFile.value);
+    } else if (logoRemoved.value) {
+      // ✅ User klik hapus & tidak upload baru → kirim sinyal hapus
+      formData.append("remove_logo", "1");
+    }
+    // Jika tidak keduanya → tidak kirim field logo (logo tidak berubah)
+
+    if (editingId.value) {
+      formData.append("_method", "PUT");
+      await ApiService.post(`admin/payment-methods/${editingId.value}`, formData);
+    } else {
+      await ApiService.post("admin/payment-methods", formData);
+    }
+
     formModal.value = false;
     fetchMethods();
   } catch (e: any) {
@@ -202,6 +309,7 @@ const submitForm = async () => {
   }
 };
 
+// ── Delete ────────────────────────────────────────────
 const deleteMethod = async (method: any) => {
   if (!confirm(`Hapus "${method.name}"?`)) return;
   try {
