@@ -32,8 +32,26 @@
           :key="trx.id"
           class="d-flex align-items-center py-5 border-bottom border-gray-100"
         >
+          <!-- Avatar / Icon -->
           <div class="symbol symbol-45px me-4">
-            <span class="symbol-label" :class="isCredit(trx) ? 'bg-light-success' : 'bg-light-danger'">
+            <!-- Jika ada related_user dengan avatar → tampilkan foto -->
+            <img
+              v-if="trx.related_user?.avatar"
+              :src="getAvatarUrl(trx.related_user.avatar)"
+              alt=""
+              class="rounded-circle object-fit-cover w-45px h-45px"
+              style="border: 2px solid #f1f5f9;"
+            />
+            <!-- Jika ada related_user tapi tidak ada avatar → inisial nama -->
+            <span
+              v-else-if="trx.related_user?.name"
+              class="symbol-label fw-bold fs-6"
+              :class="isCredit(trx) ? 'bg-light-success text-success' : 'bg-light-danger text-danger'"
+            >
+              {{ trx.related_user.name.charAt(0).toUpperCase() }}
+            </span>
+            <!-- Fallback → icon tipe transaksi -->
+            <span v-else class="symbol-label" :class="isCredit(trx) ? 'bg-light-success' : 'bg-light-danger'">
               <i class="bi fs-3"
                 :class="{
                   'bi-plus-circle-fill text-success': trx.type === 'top_up',
@@ -46,7 +64,13 @@
           </div>
 
           <div class="flex-grow-1">
-            <div class="fw-bold text-gray-800 fs-6">{{ trx.type_label }}</div>
+            <div class="d-flex align-items-center gap-2">
+              <span class="fw-bold text-gray-800 fs-6">{{ trx.type_label }}</span>
+              <!-- Nama related user jika ada -->
+              <span v-if="trx.related_user?.name" class="text-muted fs-8">
+                · {{ trx.related_user.name }}
+              </span>
+            </div>
             <div class="text-muted fs-8">{{ trx.description }}</div>
             <div class="text-muted fs-8 mt-1">
               <i class="bi bi-calendar3 me-1"></i>{{ formatDate(trx.created_at) }}
@@ -86,17 +110,31 @@
 import { ref, onMounted } from "vue";
 import ApiService from "@/core/services/ApiService";
 
-const loading = ref(true);
+const loading      = ref(true);
 const transactions = ref<any[]>([]);
-const filterType = ref("");
+const filterType   = ref("");
+const currentPage  = ref(1);
+const meta         = ref({ current_page: 1, last_page: 1, total: 0 });
+
 const isCredit = (trx: any): boolean =>
   trx.is_credit ?? (trx.type === "top_up" || trx.type === "transfer_in");
-const currentPage = ref(1);
-const meta = ref({ current_page: 1, last_page: 1, total: 0 });
 
-const formatRupiah = (val: number) => "Rp " + Number(val || 0).toLocaleString("id-ID");
+const formatRupiah = (val: number) =>
+  "Rp " + Number(val || 0).toLocaleString("id-ID");
+
 const formatDate = (date: string) =>
-  new Date(date).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  new Date(date).toLocaleDateString("id-ID", {
+    day: "2-digit", month: "short", year: "numeric",
+    hour: "2-digit", minute: "2-digit",
+  });
+
+// ✅ Konversi path avatar relatif ke URL lengkap
+const getAvatarUrl = (avatar: string | null | undefined): string | null => {
+  if (!avatar) return null;
+  if (avatar.startsWith("http")) return avatar;
+  const base = (import.meta.env.VITE_APP_API_URL ?? "").replace("/api", "");
+  return `${base}/storage/${avatar}`;
+};
 
 const fetchTransactions = async () => {
   loading.value = true;
@@ -106,9 +144,9 @@ const fetchTransactions = async () => {
     const { data } = await ApiService.query("wallet/transactions", { params });
     transactions.value = data.data;
     meta.value = {
-      current_page: data.current_page ?? 1,
-      last_page: data.last_page ?? 1,
-      total: data.total ?? 0,
+      current_page: data.meta?.current_page ?? data.current_page ?? 1,
+      last_page:    data.meta?.last_page    ?? data.last_page    ?? 1,
+      total:        data.meta?.total        ?? data.total        ?? 0,
     };
   } catch (e) {
     console.error(e);

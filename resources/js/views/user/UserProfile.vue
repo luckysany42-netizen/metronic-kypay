@@ -71,7 +71,7 @@
             </div>
             <div class="d-flex align-items-center gap-4">
               <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0" style="width:36px; height:36px; background:rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.2);">
-                <i class="ki-duotone ki-building fs-5" style="color:#fcd34d;"><span class="path1"></span><span class="path2"></span></i>
+                <i class="ki-duotone ki-home-2 fs-5" style="color:#fcd34d;"><span class="path1"></span><span class="path2"></span></i>
               </div>
               <div>
                 <div style="color:rgba(255,255,255,0.4); font-size:0.72rem; font-weight:600; text-transform:uppercase; letter-spacing:0.05em;">Perusahaan</div>
@@ -202,7 +202,7 @@
                 <label class="form-label fw-semibold text-gray-700 fs-7 mb-2">Perusahaan</label>
                 <div class="position-relative">
                   <span class="position-absolute top-50 translate-middle-y ms-4 d-flex">
-                    <i class="ki-duotone ki-building fs-4 text-muted"><span class="path1"></span><span class="path2"></span></i>
+                    <i class="ki-duotone ki-home-2 fs-4 text-muted"><span class="path1"></span><span class="path2"></span></i>
                   </span>
                   <Field type="text" name="company" class="form-control form-control-solid ps-12 fs-7" placeholder="Nama perusahaan" style="border-radius: 10px; border: 1.5px solid #eef0f5;" />
                 </div>

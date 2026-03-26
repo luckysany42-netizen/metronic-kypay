@@ -421,11 +421,11 @@ export default defineComponent({
 
     // ===== PROFILE =====
     const fieldConfig = [
-      { key: "name",      label: "Nama Lengkap", icon: "ki-profile-circle", bgClass: "bg-light-primary", iconColor: "text-primary" },
+      { key: "name",      label: "Nama Lengkap",  icon: "ki-profile-circle", bgClass: "bg-light-primary", iconColor: "text-primary" },
       { key: "email",     label: "Email",         icon: "ki-sms",            bgClass: "bg-light-info",    iconColor: "text-info" },
       { key: "phone",     label: "No. Telepon",   icon: "ki-phone",          bgClass: "bg-light-success", iconColor: "text-success" },
       { key: "job_title", label: "Jabatan",       icon: "ki-briefcase",      bgClass: "bg-light-warning", iconColor: "text-warning" },
-      { key: "company",   label: "Perusahaan",    icon: "ki-building",       bgClass: "bg-light-danger",  iconColor: "text-danger" },
+      { key: "company",   label: "Perusahaan",    icon: "ki-home-2",         bgClass: "bg-light-danger",  iconColor: "text-danger" },
       { key: "bio",       label: "Bio",           icon: "ki-notepad",        bgClass: "bg-light-warning", iconColor: "text-warning" },
     ];
 

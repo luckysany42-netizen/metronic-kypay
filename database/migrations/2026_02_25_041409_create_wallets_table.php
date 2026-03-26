@@ -42,7 +42,7 @@ return new class extends Migration
             // Tracking
             $table->timestamp('last_transaction_at')->nullable();
             $table->timestamps();
-            $table->softDeletes(); // untuk keamanan, wallet tidak benar-benar dihapus
+            $table->softDeletes(); 
 
             // Index untuk performa query
             $table->index('user_id');

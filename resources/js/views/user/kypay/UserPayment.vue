@@ -108,8 +108,6 @@
         </div>
       </div>
       <div class="card-body pt-2">
-
-        <!-- Ringkasan produk -->
         <div class="bg-light rounded-2 p-4 mb-6 d-flex align-items-center gap-4">
           <div class="symbol symbol-40px">
             <span class="symbol-label" :style="{ backgroundColor: selectedProduct?.color + '22' }">
@@ -124,7 +122,6 @@
         </div>
 
         <div class="d-flex flex-column gap-3">
-          <!-- Saldo KyPay -->
           <div class="payment-method-card" :class="paymentMethod === 'saldo' ? 'selected' : ''" @click="paymentMethod = 'saldo'">
             <div class="method-icon bg-light-warning">
               <i class="bi bi-wallet2 text-warning fs-3"></i>
@@ -139,7 +136,6 @@
             </div>
           </div>
 
-          <!-- QR Code KyPay -->
           <div class="payment-method-card" :class="paymentMethod === 'qr' ? 'selected-qr' : ''" @click="paymentMethod = 'qr'">
             <div class="method-icon bg-light-primary">
               <i class="bi bi-qr-code text-primary fs-3"></i>
@@ -236,8 +232,6 @@
         </div>
       </div>
       <div class="card-body pt-4">
-
-        <!-- Loading generate -->
         <div v-if="qrLoading" class="text-center py-10">
           <span class="spinner-border text-primary mb-3"></span>
           <div class="text-muted fs-7">Membuat QR Code...</div>
@@ -245,7 +239,6 @@
 
         <template v-if="qrData">
           <div class="row align-items-start">
-            <!-- QR Canvas -->
             <div class="col-12 col-md-5 text-center mb-6 mb-md-0">
               <div class="qr-wrapper mx-auto mb-3">
                 <div class="qr-header">
@@ -255,15 +248,12 @@
                 <canvas ref="qrCanvas" class="qr-canvas"></canvas>
                 <div class="qr-footer text-muted fs-9">Scan via menu Scan & Bayar</div>
               </div>
-
-              <!-- Countdown -->
               <div class="countdown-badge" :class="qrTimeLeft <= 60 ? 'danger' : qrTimeLeft <= 120 ? 'warning' : 'primary'">
                 <i class="bi bi-clock me-1"></i>
                 Expired dalam <strong>{{ formatTime(qrTimeLeft) }}</strong>
               </div>
             </div>
 
-            <!-- Detail -->
             <div class="col-12 col-md-7">
               <div class="bg-light rounded-3 p-5 mb-4">
                 <div class="d-flex justify-content-between mb-3">
@@ -287,7 +277,6 @@
                 </div>
               </div>
 
-              <!-- Token untuk disalin -->
               <div class="mb-4">
                 <label class="form-label fw-bold fs-8 text-muted">Token QR (bagikan ke pembayar)</label>
                 <div class="input-group">
@@ -329,14 +318,20 @@
             {{ paymentMethod === 'qr' ? 'Dibayar via QR KyPay' : 'Dibayar via Saldo KyPay' }}
           </span>
         </div>
+
         <div v-if="['token_listrik','voucher_game'].includes(successData?.category)"
           class="bg-light-warning rounded-2 p-5 mx-auto mb-5" style="max-width: 320px">
           <div class="text-muted fs-8 mb-1">{{ successData?.category === 'token_listrik' ? 'Token Listrik' : 'Kode Voucher' }}</div>
           <div class="fw-bolder fs-3 text-warning">{{ successData?.result_code }}</div>
           <div class="text-muted fs-9 mt-1">Simpan kode ini dengan baik</div>
         </div>
+
         <div class="text-muted fs-8 mb-8">Ref: {{ successData?.transaction_number }}</div>
-        <div class="d-flex justify-content-center gap-3">
+
+        <div class="d-flex justify-content-center gap-3 flex-wrap">
+          <button class="btn btn-light-success" @click="showStruk = true">
+            <i class="bi bi-receipt me-2"></i>Lihat Struk
+          </button>
           <button class="btn btn-light-warning" @click="resetForm">Bayar Lagi</button>
           <router-link :to="{ name: 'user-wallet' }" class="btn btn-warning text-white">Kembali ke Wallet</router-link>
         </div>
@@ -344,6 +339,118 @@
     </div>
 
   </div>
+
+  <!-- ===== MODAL STRUK ===== -->
+  <Teleport to="body">
+    <Transition name="modal-fade">
+      <div v-if="showStruk" class="struk-overlay" @click.self="showStruk = false">
+        <div class="struk-container">
+
+          <!-- Tombol aksi -->
+          <div class="d-flex justify-content-between align-items-center mb-4 px-1">
+            <h5 class="fw-bold mb-0">Struk Pembayaran</h5>
+            <div class="d-flex gap-2">
+              <button class="btn btn-sm btn-light-primary" @click="downloadPdf" :disabled="pdfLoading">
+                <span v-if="pdfLoading" class="spinner-border spinner-border-sm me-1"></span>
+                <i v-else class="bi bi-download me-1"></i>
+                Download PDF
+              </button>
+              <button class="btn btn-sm btn-light" @click="showStruk = false">
+                <i class="bi bi-x"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Struk -->
+          <div ref="strukRef" class="struk-paper">
+
+            <!-- Header struk -->
+            <div class="struk-header">
+              <div class="struk-logo">
+                <i class="bi bi-wallet2" style="font-size:2rem; color:#f59e0b;"></i>
+              </div>
+              <div class="struk-brand">KyPay</div>
+              <div class="struk-subtitle">Struk Pembayaran Digital</div>
+              <div class="struk-date">{{ strukDate }}</div>
+            </div>
+
+            <!-- Garis putus -->
+            <div class="struk-divider"></div>
+
+            <!-- Status -->
+            <div class="struk-status">
+              <i class="bi bi-check-circle-fill" style="color:#16a34a; font-size:1.5rem;"></i>
+              <span>PEMBAYARAN BERHASIL</span>
+            </div>
+
+            <!-- Garis putus -->
+            <div class="struk-divider"></div>
+
+            <!-- Detail transaksi -->
+            <div class="struk-row">
+              <span class="struk-label">Produk</span>
+              <span class="struk-value">{{ successData?.product_name }}</span>
+            </div>
+            <div class="struk-row">
+              <span class="struk-label">Provider</span>
+              <span class="struk-value">{{ successData?.provider }}</span>
+            </div>
+            <div class="struk-row">
+              <span class="struk-label">Tujuan</span>
+              <span class="struk-value">{{ successData?.target_number }}</span>
+            </div>
+            <div class="struk-row">
+              <span class="struk-label">Metode Bayar</span>
+              <span class="struk-value">{{ paymentMethod === 'qr' ? 'QR KyPay' : 'Saldo KyPay' }}</span>
+            </div>
+            <div class="struk-row">
+              <span class="struk-label">Biaya Admin</span>
+              <span class="struk-value" style="color:#16a34a;">Gratis</span>
+            </div>
+
+            <!-- Garis putus -->
+            <div class="struk-divider"></div>
+
+            <!-- Total -->
+            <div class="struk-row struk-total">
+              <span>Total Dibayar</span>
+              <span>{{ formatRupiah(successData?.amount) }}</span>
+            </div>
+
+            <!-- Kode hasil jika ada -->
+            <template v-if="['token_listrik','voucher_game'].includes(successData?.category) && successData?.result_code">
+              <div class="struk-divider"></div>
+              <div class="struk-kode-box">
+                <div class="struk-kode-label">{{ successData?.category === 'token_listrik' ? 'Token Listrik' : 'Kode Voucher' }}</div>
+                <div class="struk-kode-value">{{ successData?.result_code }}</div>
+                <div class="struk-kode-hint">Simpan kode ini dengan baik</div>
+              </div>
+            </template>
+
+            <!-- Garis putus -->
+            <div class="struk-divider"></div>
+
+            <!-- Ref number -->
+            <div class="struk-ref">
+              <div class="struk-label" style="text-align:center;">No. Referensi</div>
+              <div class="struk-ref-number">{{ successData?.transaction_number || '-' }}</div>
+            </div>
+
+            <!-- Footer -->
+            <div class="struk-divider"></div>
+            <div class="struk-footer">
+              <div>Terima kasih telah menggunakan KyPay</div>
+              <div style="margin-top:4px; font-size:0.7rem; color:#9ca3af;">Struk ini merupakan bukti transaksi yang sah</div>
+            </div>
+
+          </div>
+          <!-- end struk paper -->
+
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
+
 </template>
 
 <script setup lang="ts">
@@ -365,6 +472,11 @@ const products          = ref<any[]>([]);
 const successData       = ref<any>(null);
 const targetError       = ref("");
 const paymentMethod     = ref<'saldo' | 'qr' | ''>("");
+
+// Struk state
+const showStruk  = ref(false);
+const pdfLoading = ref(false);
+const strukRef   = ref<HTMLElement | null>(null);
 
 // QR Bill state
 const qrLoading  = ref(false);
@@ -406,8 +518,63 @@ const filteredProducts     = computed(() =>
   selectedProvider.value === "Semua" ? products.value : products.value.filter((p: any) => p.provider === selectedProvider.value)
 );
 
+// Tanggal struk
+const strukDate = computed(() => {
+  return new Date().toLocaleString("id-ID", {
+    day: "2-digit", month: "long", year: "numeric",
+    hour: "2-digit", minute: "2-digit", second: "2-digit",
+  });
+});
+
 const formatRupiah = (val: number) => "Rp " + Number(val || 0).toLocaleString("id-ID");
 const formatTime   = (s: number)   => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
+
+// ── Download PDF menggunakan html2canvas + jsPDF ──────
+const downloadPdf = async () => {
+  if (!strukRef.value) return;
+  pdfLoading.value = true;
+
+  try {
+    // Load html2canvas dan jsPDF dari CDN jika belum ada
+    if (!(window as any).html2canvas) {
+      await new Promise<void>((resolve, reject) => {
+        const s = document.createElement("script");
+        s.src = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
+        s.onload = () => resolve();
+        s.onerror = () => reject();
+        document.head.appendChild(s);
+      });
+    }
+    if (!(window as any).jspdf) {
+      await new Promise<void>((resolve, reject) => {
+        const s = document.createElement("script");
+        s.src = "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+        s.onload = () => resolve();
+        s.onerror = () => reject();
+        document.head.appendChild(s);
+      });
+    }
+
+    const html2canvas = (window as any).html2canvas;
+    const { jsPDF }   = (window as any).jspdf;
+
+    const canvas = await html2canvas(strukRef.value, {
+      scale: 2, useCORS: true, backgroundColor: "#ffffff",
+    });
+
+    const imgData  = canvas.toDataURL("image/png");
+    const pdf      = new jsPDF({ orientation: "portrait", unit: "mm", format: "a5" });
+    const pdfW     = pdf.internal.pageSize.getWidth();
+    const pdfH     = (canvas.height * pdfW) / canvas.width;
+
+    pdf.addImage(imgData, "PNG", 0, 0, pdfW, pdfH);
+    pdf.save(`struk-kypay-${successData.value?.transaction_number ?? Date.now()}.pdf`);
+  } catch (e) {
+    alert("Gagal generate PDF. Coba lagi.");
+  } finally {
+    pdfLoading.value = false;
+  }
+};
 
 const selectCategory = async (key: string) => {
   selectedCategory.value = key; selectedProduct.value = null;
@@ -440,7 +607,6 @@ const goToPaymentMethod = () => {
 const goToConfirm = async () => {
   if (!paymentMethod.value) return;
   pin.value = ""; errorMsg.value = "";
-
   if (paymentMethod.value === "qr") {
     step.value = 3;
     await generateQrBill();
@@ -449,13 +615,10 @@ const goToConfirm = async () => {
   }
 };
 
-// ── QR Bill ─────────────────────────────────────────────
+// ── QR Bill ───────────────────────────────────────────────
 const generateQrBill = async () => {
-  qrLoading.value = true;
-  qrData.value = null;
-  qrStatus.value = "pending";
-  qrTimeLeft.value = 300;
-
+  qrLoading.value = true; qrData.value = null;
+  qrStatus.value = "pending"; qrTimeLeft.value = 300;
   try {
     const { data } = await ApiService.post("qr-payment/generate", {
       amount:        selectedProduct.value.price,
@@ -464,20 +627,16 @@ const generateQrBill = async () => {
       target_number: targetNumber.value,
     });
     qrData.value = data.data;
-
-    // Simpan state ke sessionStorage supaya tidak hilang saat navigasi
     sessionStorage.setItem("kypay_qr_bill", JSON.stringify({
       ...data.data,
       _product:      selectedProduct.value,
       _targetNumber: targetNumber.value,
       _category:     selectedCategory.value,
     }));
-
     await nextTick();
     if (qrCanvas.value) {
       await QRCode.toCanvas(qrCanvas.value, data.data.qr_token, {
-        width: 220, margin: 2,
-        color: { dark: "#1a1a2e", light: "#ffffff" },
+        width: 220, margin: 2, color: { dark: "#1a1a2e", light: "#ffffff" },
       });
     }
     startQrPolling(data.data.qr_token);
@@ -485,9 +644,7 @@ const generateQrBill = async () => {
   } catch (e: any) {
     errorMsg.value = e.response?.data?.message ?? "Gagal generate QR.";
     step.value = 2;
-  } finally {
-    qrLoading.value = false;
-  }
+  } finally { qrLoading.value = false; }
 };
 
 const startQrPolling = (token: string) => {
@@ -498,19 +655,19 @@ const startQrPolling = (token: string) => {
       if (data.data.status === "paid") {
         stopQrAll();
         sessionStorage.removeItem("kypay_qr_bill");
-        // Build successData dari info yang ada
         successData.value = {
-          product_name:        selectedProduct.value?.name,
-          target_number:       targetNumber.value,
-          category:            selectedCategory.value,
-          result_code:         data.data.bill?.result_code ?? null,
-          transaction_number:  null,
+          product_name:       selectedProduct.value?.name,
+          provider:           selectedProduct.value?.provider,
+          target_number:      targetNumber.value,
+          category:           selectedCategory.value,
+          result_code:        data.data.bill?.result_code ?? null,
+          transaction_number: qrData.value?.qr_token ?? '-',
+          amount:             selectedProduct.value?.price,
         };
         currentBalance.value -= Number(selectedProduct.value?.price ?? 0);
         step.value = 4;
       } else if (["expired", "cancelled"].includes(data.data.status)) {
-        stopQrAll();
-        step.value = 2;
+        stopQrAll(); step.value = 2;
       }
     } catch {}
   }, 2000);
@@ -533,9 +690,7 @@ const cancelQrBill = async () => {
     try { await ApiService.delete(`qr-payment/${qrData.value.qr_token}/cancel`); } catch {}
   }
   sessionStorage.removeItem("kypay_qr_bill");
-  stopQrAll();
-  qrData.value = null;
-  step.value = 2;
+  stopQrAll(); qrData.value = null; step.value = 2;
 };
 
 const copyQrToken = async () => {
@@ -544,7 +699,6 @@ const copyQrToken = async () => {
   qrCopied.value = true;
   setTimeout(() => (qrCopied.value = false), 2000);
 };
-// ────────────────────────────────────────────────────────
 
 const submitPayment = async () => {
   errorMsg.value = "";
@@ -554,7 +708,11 @@ const submitPayment = async () => {
     const { data } = await ApiService.post("payment", {
       product_code: selectedProduct.value.code, target_number: targetNumber.value, pin: pin.value, note: null,
     });
-    successData.value = data.data;
+    successData.value = {
+      ...data.data,
+      amount: selectedProduct.value.price,
+      provider: selectedProduct.value.provider,
+    };
     currentBalance.value -= selectedProduct.value.price;
     step.value = 4;
   } catch (e: any) {
@@ -565,21 +723,18 @@ const submitPayment = async () => {
 const resetForm = () => {
   step.value = 1; selectedProduct.value = null; selectedCategory.value = ""; targetNumber.value = "";
   pin.value = ""; errorMsg.value = ""; successData.value = null; paymentMethod.value = "";
-  qrData.value = null; stopQrAll();
+  qrData.value = null; stopQrAll(); showStruk.value = false;
   sessionStorage.removeItem("kypay_qr_bill");
 };
 
-// Re-render canvas setiap kali qrData berubah dan canvas tersedia
 watch(qrData, async (val) => {
   if (!val?.qr_token) return;
   await nextTick();
-  // Coba beberapa kali karena canvas mungkin belum mount
   for (let i = 0; i < 5; i++) {
     await new Promise(r => setTimeout(r, 100));
     if (qrCanvas.value) {
       await QRCode.toCanvas(qrCanvas.value, val.qr_token, {
-        width: 220, margin: 2,
-        color: { dark: "#1a1a2e", light: "#ffffff" },
+        width: 220, margin: 2, color: { dark: "#1a1a2e", light: "#ffffff" },
       });
       break;
     }
@@ -593,34 +748,24 @@ onMounted(async () => {
     currentBalance.value = Number(w?.balance ?? 0);
   } catch {}
 
-  // Restore state jika ada QR aktif yang tersimpan
   const saved = sessionStorage.getItem("kypay_qr_bill");
   if (saved) {
     try {
       const s = JSON.parse(saved);
       if (s.qr_token && s.expires_at && new Date(s.expires_at) > new Date()) {
-        qrData.value          = s;
-        selectedProduct.value = s._product;
-        targetNumber.value    = s._targetNumber;
-        selectedCategory.value= s._category;
-        paymentMethod.value   = "qr";
-        step.value            = 3;
-        qrStatus.value        = "pending";
+        qrData.value = s; selectedProduct.value = s._product;
+        targetNumber.value = s._targetNumber; selectedCategory.value = s._category;
+        paymentMethod.value = "qr"; step.value = 3; qrStatus.value = "pending";
         const secsLeft = Math.floor((new Date(s.expires_at).getTime() - Date.now()) / 1000);
         qrTimeLeft.value = Math.max(0, secsLeft);
-
         await nextTick();
         if (qrCanvas.value) {
           await QRCode.toCanvas(qrCanvas.value, s.qr_token, {
-            width: 220, margin: 2,
-            color: { dark: "#1a1a2e", light: "#ffffff" },
+            width: 220, margin: 2, color: { dark: "#1a1a2e", light: "#ffffff" },
           });
         }
-        startQrPolling(s.qr_token);
-        startQrCountdown();
-      } else {
-        sessionStorage.removeItem("kypay_qr_bill");
-      }
+        startQrPolling(s.qr_token); startQrCountdown();
+      } else { sessionStorage.removeItem("kypay_qr_bill"); }
     } catch { sessionStorage.removeItem("kypay_qr_bill"); }
   }
 });
@@ -629,6 +774,7 @@ onUnmounted(() => stopQrAll());
 </script>
 
 <style scoped>
+/* Payment method card */
 .payment-method-card {
   display: flex; align-items: center; gap: 1rem;
   padding: 1.25rem 1.5rem;
@@ -642,18 +788,74 @@ onUnmounted(() => stopQrAll());
 .method-radio { width: 20px; height: 20px; border-radius: 50%; border: 2px solid #cbd5e1; flex-shrink: 0; transition: all 0.2s; }
 .method-radio.active    { border-color: #f59e0b; background: #f59e0b; box-shadow: inset 0 0 0 4px #fff; }
 .method-radio.active-qr { border-color: #3b82f6; background: #3b82f6; box-shadow: inset 0 0 0 4px #fff; }
-.qr-wrapper {
-  background: #fff; border-radius: 20px; padding: 20px;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.10); display: inline-block; max-width: 280px;
-}
+
+/* QR */
+.qr-wrapper { background: #fff; border-radius: 20px; padding: 20px; box-shadow: 0 4px 24px rgba(0,0,0,0.10); display: inline-block; max-width: 280px; }
 .qr-header { text-align: center; margin-bottom: 12px; }
 .qr-canvas  { display: block; margin: 0 auto; border-radius: 8px; }
 .qr-footer  { text-align: center; margin-top: 10px; }
-.countdown-badge {
-  display: inline-block; padding: 6px 16px;
-  border-radius: 20px; font-size: 0.82rem; font-weight: 600; margin-top: 8px;
-}
+.countdown-badge { display: inline-block; padding: 6px 16px; border-radius: 20px; font-size: 0.82rem; font-weight: 600; margin-top: 8px; }
 .countdown-badge.primary { background: #dbeafe; color: #1e40af; }
 .countdown-badge.warning { background: #fef9c3; color: #854d0e; }
 .countdown-badge.danger  { background: #fee2e2; color: #991b1b; }
+
+/* Modal struk */
+.struk-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(4px); z-index: 9999;
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+}
+.struk-container {
+  width: 100%; max-width: 400px;
+  background: #f8fafc; border-radius: 16px; padding: 24px;
+  box-shadow: 0 25px 60px rgba(0,0,0,0.4);
+  max-height: 90vh; overflow-y: auto;
+}
+
+/* Struk paper */
+.struk-paper {
+  background: #fff;
+  border-radius: 8px;
+  padding: 24px 20px;
+  font-family: 'Courier New', monospace;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+}
+.struk-header { text-align: center; margin-bottom: 8px; }
+.struk-logo { margin-bottom: 4px; }
+.struk-brand { font-size: 1.5rem; font-weight: 900; color: #1e293b; letter-spacing: -1px; }
+.struk-subtitle { font-size: 0.72rem; color: #64748b; margin-top: 2px; }
+.struk-date { font-size: 0.7rem; color: #94a3b8; margin-top: 6px; }
+.struk-divider {
+  border: none; border-top: 2px dashed #e2e8f0;
+  margin: 14px 0;
+}
+.struk-status {
+  display: flex; align-items: center; justify-content: center;
+  gap: 8px; font-weight: 800; font-size: 0.85rem;
+  color: #16a34a; letter-spacing: 0.05em; margin: 4px 0;
+}
+.struk-row {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  gap: 12px; margin-bottom: 8px; font-size: 0.78rem;
+}
+.struk-label { color: #64748b; flex-shrink: 0; }
+.struk-value { color: #1e293b; font-weight: 600; text-align: right; word-break: break-all; }
+.struk-total {
+  font-weight: 800; font-size: 1rem; color: #1e293b;
+  padding: 4px 0;
+}
+.struk-kode-box {
+  background: #fefce8; border: 1.5px dashed #fbbf24;
+  border-radius: 8px; padding: 12px; text-align: center; margin: 4px 0;
+}
+.struk-kode-label { font-size: 0.7rem; color: #92400e; margin-bottom: 4px; }
+.struk-kode-value { font-size: 1.4rem; font-weight: 900; color: #b45309; letter-spacing: 2px; }
+.struk-kode-hint  { font-size: 0.65rem; color: #a16207; margin-top: 4px; }
+.struk-ref { text-align: center; margin: 4px 0; }
+.struk-ref-number { font-size: 0.75rem; font-weight: 700; color: #475569; margin-top: 4px; letter-spacing: 0.05em; }
+.struk-footer { text-align: center; color: #64748b; font-size: 0.72rem; padding-top: 4px; }
+
+/* Animasi modal */
+.modal-fade-enter-active, .modal-fade-leave-active { transition: opacity 0.2s ease; }
+.modal-fade-enter-from, .modal-fade-leave-to { opacity: 0; }
 </style>
