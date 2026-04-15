@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\WalletController;
 use App\Http\Controllers\Api\TopUpController;
 use App\Http\Controllers\Api\TransferController;
 use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\Admin\AdminTopUpController;
 use App\Http\Controllers\Api\Admin\AdminPaymentController;
 use App\Http\Controllers\Api\Admin\AdminUserController;
@@ -78,6 +79,13 @@ Route::middleware(['auth.token'])->group(function () {
         Route::get('/status/{token}',    [QrPaymentController::class, 'status']);
         Route::delete('/{token}/cancel', [QrPaymentController::class, 'cancel']);
     });
+
+    // --- KyPay: Kontak ---
+    Route::prefix('contacts')->group(function () {
+        Route::get('/',                          [ContactController::class, 'index']);
+        Route::post('/{wallet_number}/favorite', [ContactController::class, 'toggleFavorite']);
+    });
+
 });
 
 // ================================================================
@@ -109,16 +117,16 @@ Route::middleware(['auth.token', 'role:admin'])->prefix('admin')->group(function
         Route::get('/',        [AdminPaymentController::class, 'paymentMethods']);
         Route::post('/',       [AdminPaymentController::class, 'storePaymentMethod']);
         Route::put('/{id}',    [AdminPaymentController::class, 'updatePaymentMethod']);
-        Route::post('/{id}',   [AdminPaymentController::class, 'updatePaymentMethod']); // ✅ tambah ini untuk FormData + _method spoofing
+        Route::post('/{id}',   [AdminPaymentController::class, 'updatePaymentMethod']); // FormData + _method spoofing
         Route::delete('/{id}', [AdminPaymentController::class, 'destroyPaymentMethod']);
     });
-
+    
     // --- All Transactions ---
     Route::get('/transactions', [AdminPaymentController::class, 'transactions']);
 
-    // ✅ --- Manajemen User ---
+    // --- Manajemen User ---
     Route::prefix('users')->group(function () {
-        Route::get('/',              [AdminUserController::class, 'index']);
+        Route::get('/',                [AdminUserController::class, 'index']);
         Route::post('/{id}/suspend',   [AdminUserController::class, 'suspend']);
         Route::post('/{id}/unsuspend', [AdminUserController::class, 'unsuspend']);
     });

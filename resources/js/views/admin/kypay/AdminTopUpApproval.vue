@@ -296,8 +296,12 @@ const formatDate = (date: string) =>
  */
 const avatarUrl = (path: string): string => {
   if (!path) return "";
+  // Sudah full URL → pakai langsung
   if (path.startsWith("http://") || path.startsWith("https://")) return path;
   const base = import.meta.env.VITE_APP_API_URL?.replace("/api", "") ?? "http://127.0.0.1:8000";
+  // Storage::url() sudah return path dengan /storage/ di depan → jangan dobel
+  if (path.startsWith("/storage/")) return `${base}${path}`;
+  // Path relatif (avatar user) → tambahkan /storage/
   return `${base}/storage/${path}`;
 };
 

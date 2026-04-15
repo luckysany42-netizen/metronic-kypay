@@ -13,9 +13,27 @@
       <div class="card-body d-flex flex-column justify-content-between p-9">
         <div class="d-flex justify-content-between align-items-start">
           <div>
-            <div class="d-flex align-items-center gap-3 mb-2">
+            <div class="d-flex align-items-center gap-3 mb-2 flex-wrap">
               <span class="badge badge-light-success fs-7 fw-bold">● AKTIF</span>
-              <span class="text-white-50 fs-7">{{ wallet.wallet_number }}</span>
+
+              <!-- ✅ Nomor wallet + tombol salin -->
+              <div class="d-flex align-items-center gap-2">
+                <span class="text-white-50 fs-7">{{ wallet.wallet_number }}</span>
+                <button
+                  class="btn btn-sm btn-icon"
+                  style="background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); color: white; width: 26px; height: 26px; padding: 0;"
+                  @click="copyWalletNumber"
+                  :title="copied ? 'Tersalin!' : 'Salin nomor wallet'"
+                >
+                  <i class="bi fs-8" :class="copied ? 'bi-check2' : 'bi-clipboard'"></i>
+                </button>
+                <!-- Tooltip tersalin -->
+                <Transition name="fade">
+                  <span v-if="copied" class="badge badge-light-success fs-9 fw-bold">
+                    Tersalin!
+                  </span>
+                </Transition>
+              </div>
             </div>
             <div class="text-white-50 fs-7 mb-1">Saldo KyPay</div>
             <div class="text-white fw-bolder" style="font-size: 2.5rem;">
@@ -214,6 +232,7 @@ const loadingWallet       = ref(true);
 const loadingTransactions = ref(true);
 const refreshing          = ref(false);
 const lastRefreshed       = ref("");
+const copied              = ref(false); // ✅ state tombol salin
 
 const showPinModal = ref(false);
 const pinLoading   = ref(false);
@@ -235,6 +254,26 @@ const trxIcon = (type: string) => {
   if (type === "transfer_out") return "bi-arrow-up-circle-fill";
   if (type === "payment")      return "bi-cart-fill";
   return "bi-circle-fill";
+};
+
+// ✅ Fungsi salin nomor wallet
+const copyWalletNumber = async () => {
+  if (!wallet.value?.wallet_number) return;
+  try {
+    await navigator.clipboard.writeText(wallet.value.wallet_number);
+    copied.value = true;
+    setTimeout(() => (copied.value = false), 2000);
+  } catch {
+    // Fallback untuk browser yang tidak support clipboard API
+    const el = document.createElement("textarea");
+    el.value = wallet.value.wallet_number;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand("copy");
+    document.body.removeChild(el);
+    copied.value = true;
+    setTimeout(() => (copied.value = false), 2000);
+  }
 };
 
 const fetchWallet = async () => {
@@ -286,7 +325,6 @@ const submitPin = async () => {
   }
 };
 
-// Refresh saat window fokus (kembali dari tab/halaman lain di browser)
 const onWindowFocus = () => refreshAll();
 
 onMounted(() => {
@@ -294,7 +332,6 @@ onMounted(() => {
   window.addEventListener("focus", onWindowFocus);
 });
 
-// Refresh saat navigasi balik via Vue Router (keep-alive)
 onActivated(() => refreshAll());
 
 onUnmounted(() => {
@@ -308,4 +345,8 @@ onUnmounted(() => {
   to   { transform: rotate(360deg); }
 }
 .spin { animation: spin 0.8s linear infinite; display: inline-block; }
+
+/* Animasi fade untuk tooltip "Tersalin!" */
+.fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
 </style>
