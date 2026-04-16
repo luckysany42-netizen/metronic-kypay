@@ -96,6 +96,7 @@ Route::middleware(['auth.token', 'role:admin'])->prefix('admin')->group(function
 
     // --- KyPay Dashboard ---
     Route::get('/payment/dashboard', [AdminPaymentController::class, 'dashboard']);
+    Route::get('/payment/chart', [AdminPaymentController::class, 'chartData']);
 
     // --- Manage Top Up Requests ---
     Route::prefix('topup')->group(function () {

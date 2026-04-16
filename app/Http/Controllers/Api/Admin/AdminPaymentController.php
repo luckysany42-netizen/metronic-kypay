@@ -50,6 +50,61 @@ class AdminPaymentController extends Controller
     }
 
     // =====================================================
+    // CHART DATA
+    // =====================================================
+
+    public function chartData(Request $request)
+    {
+        $days = (int) $request->get('days', 7);
+        $days = in_array($days, [7, 14, 30]) ? $days : 7;
+
+        $labels       = [];
+        $topupData    = [];
+        $transferData = [];
+        $paymentData  = [];
+
+        for ($i = $days - 1; $i >= 0; $i--) {
+            $date = now()->subDays($i)->toDateString();
+
+            $labels[]       = now()->subDays($i)->locale('id')->isoFormat('DD MMM');
+            $topupData[]    = Transaction::where('type', 'top_up')
+                                ->where('status', 'success')
+                                ->whereDate('created_at', $date)
+                                ->count();
+            $transferData[] = Transaction::where('type', 'transfer_out')
+                                ->where('status', 'success')
+                                ->whereDate('created_at', $date)
+                                ->count();
+            $paymentData[]  = Transaction::where('type', 'payment')
+                                ->where('status', 'success')
+                                ->whereDate('created_at', $date)
+                                ->count();
+        }
+
+        // Donut: total per tipe semua waktu
+        $totalTopup    = Transaction::where('type', 'top_up')->where('status', 'success')->count();
+        $totalTransfer = Transaction::where('type', 'transfer_out')->where('status', 'success')->count();
+        $totalPayment  = Transaction::where('type', 'payment')->where('status', 'success')->count();
+        $totalOther    = Transaction::whereNotIn('type', ['top_up', 'transfer_out', 'payment'])->count();
+
+        return response()->json([
+            'success' => true,
+            'data'    => [
+                'labels'   => $labels,
+                'topup'    => $topupData,
+                'transfer' => $transferData,
+                'payment'  => $paymentData,
+                'donut'    => [
+                    'top_up'   => $totalTopup,
+                    'transfer' => $totalTransfer,
+                    'payment'  => $totalPayment,
+                    'other'    => $totalOther,
+                ],
+            ],
+        ]);
+    }
+
+    // =====================================================
     // WALLET MANAGEMENT
     // =====================================================
 
@@ -217,7 +272,6 @@ class AdminPaymentController extends Controller
 
         $data = $request->except(['logo', 'remove_logo']);
 
-        // ✅ Hapus logo jika diminta
         if ($request->input('remove_logo') == '1') {
             if ($method->logo) {
                 Storage::disk('public')->delete($method->logo);
@@ -225,7 +279,6 @@ class AdminPaymentController extends Controller
             $data['logo'] = null;
         }
 
-        // ✅ Upload logo baru jika ada
         if ($request->hasFile('logo')) {
             if ($method->logo) {
                 Storage::disk('public')->delete($method->logo);

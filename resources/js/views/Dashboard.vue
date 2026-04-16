@@ -275,6 +275,7 @@ export default defineComponent({
     let donutChart: any = null;
 
     const donutLegend = ref<{ label: string; color: string; value: number }[]>([]);
+    const chartStats = ref({ topup: 0, transfer: 0, payment: 0 });
 
     // ── Load Chart.js dari CDN ──────────────────────────
     const loadChartJs = (): Promise<any> => {
@@ -288,48 +289,37 @@ export default defineComponent({
       });
     };
 
-    // ── Generate data dummy ────────────────────────────
-    const generateChartData = (days: number) => {
-      const labels: string[]       = [];
-      const topupData: number[]    = [];
-      const transferData: number[] = [];
-      const paymentData: number[]  = [];
-
-      for (let i = days - 1; i >= 0; i--) {
-        const d = new Date();
-        d.setDate(d.getDate() - i);
-        labels.push(d.toLocaleDateString("id-ID", { day: "2-digit", month: "short" }));
-        const base = Math.max(1, Math.floor((stats.value.total_transactions ?? 10) / days));
-        topupData.push(Math.floor(base * (0.5 + Math.random() * 1.5)));
-        transferData.push(Math.floor(base * (0.3 + Math.random() * 1.2)));
-        paymentData.push(Math.floor(base * (0.4 + Math.random() * 1.0)));
-      }
-
-      return { labels, topupData, transferData, paymentData };
+    // ── Fetch chart data dari API ───────────────────────
+    const fetchChartData = async (days: number) => {
+      const { data } = await ApiService.get(`admin/payment/chart?days=${days}`, "");
+      return data.data;
     };
 
-    // ── Render line chart (pertama kali) ───────────────
-    const renderLineChart = async () => {
+    // ── Render line chart ───────────────────────────────
+    const renderLineChart = async (chartData?: any) => {
       const Chart = await loadChartJs();
       await nextTick();
       if (!chartCanvas.value) return;
 
-      // Destroy dulu jika sudah ada
-      if (lineChart) {
-        lineChart.destroy();
-        lineChart = null;
-      }
+      if (lineChart) { lineChart.destroy(); lineChart = null; }
 
-      const { labels, topupData, transferData, paymentData } = generateChartData(chartPeriod.value);
+      const cd = chartData ?? await fetchChartData(chartPeriod.value);
+
+      // Update stats
+      chartStats.value = {
+        topup:    cd.topup ? cd.topup.reduce((a: number, b: number) => a + b, 0) : 0,
+        transfer: cd.transfer ? cd.transfer.reduce((a: number, b: number) => a + b, 0) : 0,
+        payment:  cd.payment ? cd.payment.reduce((a: number, b: number) => a + b, 0) : 0,
+      };
 
       lineChart = new Chart(chartCanvas.value, {
         type: "line",
         data: {
-          labels,
+          labels: cd.labels,
           datasets: [
             {
-              label: "Top Up",
-              data: topupData,
+              label: `${chartStats.value.topup} Top Up`,
+              data: cd.topup,
               borderColor: "#22c55e",
               backgroundColor: "rgba(34,197,94,0.1)",
               borderWidth: 2.5,
@@ -339,8 +329,8 @@ export default defineComponent({
               fill: true,
             },
             {
-              label: "Transfer",
-              data: transferData,
+              label: `${chartStats.value.transfer} Transfer`,
+              data: cd.transfer,
               borderColor: "#3b82f6",
               backgroundColor: "rgba(59,130,246,0.08)",
               borderWidth: 2.5,
@@ -350,8 +340,8 @@ export default defineComponent({
               fill: true,
             },
             {
-              label: "Pembayaran",
-              data: paymentData,
+              label: `${chartStats.value.payment} Pembayaran`,
+              data: cd.payment,
               borderColor: "#f59e0b",
               backgroundColor: "rgba(245,158,11,0.08)",
               borderWidth: 2.5,
@@ -401,34 +391,19 @@ export default defineComponent({
       });
     };
 
-    // ✅ Update data chart tanpa destroy — fix bug hilang saat ganti periode
-    const updateLineChart = (days: number) => {
-      if (!lineChart) return;
-      const { labels, topupData, transferData, paymentData } = generateChartData(days);
-      lineChart.data.labels                  = labels;
-      lineChart.data.datasets[0].data        = topupData;
-      lineChart.data.datasets[1].data        = transferData;
-      lineChart.data.datasets[2].data        = paymentData;
-      lineChart.update("active"); // animasi smooth
-    };
-
-    // ── Render donut chart ─────────────────────────────
-    const renderDonutChart = async () => {
+    // ── Render donut chart ──────────────────────────────
+    const renderDonutChart = async (donutData?: any) => {
       const Chart = await loadChartJs();
       await nextTick();
       if (!donutCanvas.value) return;
 
       if (donutChart) { donutChart.destroy(); donutChart = null; }
 
-      const total       = stats.value.total_transactions ?? 10;
-      const topupAmt    = Math.floor(total * 0.35);
-      const transferAmt = Math.floor(total * 0.30);
-      const paymentAmt  = Math.floor(total * 0.25);
-      const otherAmt    = total - topupAmt - transferAmt - paymentAmt;
+      const dd = donutData ?? (await fetchChartData(chartPeriod.value)).donut;
 
       const colors = ["#22c55e", "#3b82f6", "#f59e0b", "#a855f7"];
       const labels = ["Top Up", "Transfer", "Pembayaran", "Lainnya"];
-      const values = [topupAmt, transferAmt, paymentAmt, otherAmt];
+      const values = [dd.top_up, dd.transfer, dd.payment, dd.other];
 
       donutLegend.value = labels.map((label, i) => ({
         label,
@@ -467,30 +442,63 @@ export default defineComponent({
       });
     };
 
-    // ✅ Ganti periode — update data saja, tidak destroy chart
-    const changeChartPeriod = (period: number) => {
+    // ── Ganti periode → fetch data baru ────────────────
+    const changeChartPeriod = async (period: number) => {
       if (chartPeriod.value === period) return;
-      chartPeriod.value = period;
-      updateLineChart(period);
+      chartPeriod.value  = period;
+      chartLoading.value = true;
+      try {
+        const cd = await fetchChartData(period);
+        
+        // Update stats
+        chartStats.value = {
+          topup:    cd.topup ? cd.topup.reduce((a: number, b: number) => a + b, 0) : 0,
+          transfer: cd.transfer ? cd.transfer.reduce((a: number, b: number) => a + b, 0) : 0,
+          payment:  cd.payment ? cd.payment.reduce((a: number, b: number) => a + b, 0) : 0,
+        };
+
+        if (lineChart) {
+          // Update labels dengan data baru
+          lineChart.data.labels           = cd.labels;
+          lineChart.data.datasets[0].label = `${chartStats.value.topup} Top Up`;
+          lineChart.data.datasets[0].data = cd.topup;
+          lineChart.data.datasets[1].label = `${chartStats.value.transfer} Transfer`;
+          lineChart.data.datasets[1].data = cd.transfer;
+          lineChart.data.datasets[2].label = `${chartStats.value.payment} Pembayaran`;
+          lineChart.data.datasets[2].data = cd.payment;
+          lineChart.update("active");
+        }
+      } finally {
+        chartLoading.value = false;
+      }
     };
 
+    // ── Fetch dashboard + chart sekaligus ───────────────
     const fetchDashboard = async () => {
       loading.value = true;
       try {
-        const { data } = await ApiService.get("admin/payment/dashboard", "");
-        stats.value = data.data;
-      } catch (e) {
-        console.error("Failed to load dashboard", e);
-      } finally {
-        loading.value      = false; // ✅ false dulu agar canvas ter-render di DOM
+        const [dashRes, chartRes] = await Promise.all([
+          ApiService.get("admin/payment/dashboard", ""),
+          ApiService.get(`admin/payment/chart?days=${chartPeriod.value}`, ""),
+        ]);
+
+        stats.value = dashRes.data.data;
+        const cd    = chartRes.data.data;
+
+        loading.value      = false;
         chartLoading.value = true;
         await nextTick();
-        await nextTick(); // ✅ double nextTick pastikan DOM sudah siap
+        await nextTick();
+
         try {
-          await Promise.all([renderLineChart(), renderDonutChart()]);
+          await Promise.all([renderLineChart(cd), renderDonutChart(cd.donut)]);
         } finally {
           chartLoading.value = false;
         }
+      } catch (e) {
+        console.error("Failed to load dashboard", e);
+        loading.value      = false;
+        chartLoading.value = false;
       }
     };
 
@@ -523,7 +531,7 @@ export default defineComponent({
     return {
       loading, chartLoading, stats,
       chartCanvas, donutCanvas,
-      chartPeriod, chartPeriods, donutLegend,
+      chartPeriod, chartPeriods, donutLegend, chartStats,
       changeChartPeriod,
       formatRupiah, avatarUrl, formatTime,
     };
