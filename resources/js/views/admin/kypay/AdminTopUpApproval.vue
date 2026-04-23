@@ -56,14 +56,14 @@
         <div class="card-title">
           <h3 class="fw-bold mb-0">Pengajuan Top Up</h3>
         </div>
-        <div class="card-toolbar gap-3">
-          <select v-model="filterStatus" class="form-select form-select-solid form-select-sm w-auto" @change="fetchTopUps">
+        <div class="card-toolbar gap-2" style="flex-wrap: wrap; justify-content: flex-end;">
+          <select v-model="filterStatus" class="form-select form-select-solid form-select-sm" style="min-width: 150px; flex-shrink: 0;" @change="fetchTopUps">
             <option value="">Semua Status</option>
             <option value="pending">Pending</option>
             <option value="approved">Disetujui</option>
             <option value="rejected">Ditolak</option>
           </select>
-          <input v-model="search" @input="fetchTopUps" type="text" class="form-control form-control-solid form-control-sm w-200px" placeholder="Cari nama/referensi..." />
+          <input v-model="search" @input="fetchTopUps" type="text" class="form-control form-control-solid form-control-sm" placeholder="Cari nama/referensi..." style="min-width: 200px; flex-shrink: 0;" />
         </div>
       </div>
       <div class="card-body pt-0">
@@ -77,57 +77,59 @@
           <div class="text-muted">Tidak ada data</div>
         </div>
 
-        <div v-else class="table-responsive">
-          <table class="table table-row-dashed table-row-gray-300 align-middle gs-0 gy-4">
-            <thead>
+        <div v-else style="overflow-x: auto; max-height: 600px; overflow-y: auto;">
+          <table class="table table-row-dashed table-row-gray-300 align-middle gs-0 gy-2" style="min-width: 1000px; margin-bottom: 0;">
+            <thead style="position: sticky; top: 0; z-index: 10; background: white;">
               <tr class="fw-bold text-muted bg-light">
-                <th class="ps-4">User</th>
-                <th>Referensi</th>
-                <th>Metode</th>
-                <th>Jumlah</th>
-                <th>Tanggal</th>
-                <th>Status</th>
-                <th class="text-end pe-4">Aksi</th>
+                <th class="ps-4" style="min-width: 180px;">User</th>
+                <th style="min-width: 140px;">Referensi</th>
+                <th style="min-width: 120px;">Metode</th>
+                <th style="min-width: 120px;">Jumlah</th>
+                <th style="min-width: 150px;">Tanggal</th>
+                <th style="min-width: 100px;">Status</th>
+                <th class="text-end pe-4" style="min-width: 120px;">Aksi</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in topUps" :key="item.id">
-                <td class="ps-4">
-                  <div class="d-flex align-items-center gap-3">
-                    <div class="symbol symbol-35px">
+              <tr v-for="item in topUps" :key="item.id" style="height: 56px;">
+                <td class="ps-4" style="vertical-align: middle;">
+                  <div class="d-flex align-items-center gap-2" style="min-width: 0;">
+                    <div class="symbol symbol-35px flex-shrink-0">
                       <!-- ✅ pakai avatarUrl() helper agar path relatif di-prefix storage URL -->
-                      <img v-if="item.user.avatar" :src="avatarUrl(item.user.avatar)" alt="" class="rounded-circle" style="width:35px;height:35px;object-fit:cover;" />
-                      <span v-else class="symbol-label bg-light-primary text-primary fw-bold">
+                      <img v-if="item.user.avatar" :src="avatarUrl(item.user.avatar)" alt="" class="rounded-circle" style="width:35px;height:35px;object-fit:cover;flex-shrink:0;" />
+                      <span v-else class="symbol-label bg-light-primary text-primary fw-bold" style="width:35px;height:35px;line-height:35px;flex-shrink:0;">
                         {{ item.user.name?.charAt(0) }}
                       </span>
                     </div>
-                    <div>
-                      <div class="fw-bold fs-7">{{ item.user.name }}</div>
-                      <div class="text-muted fs-8">{{ item.wallet_number }}</div>
+                    <div style="min-width: 0; flex: 1;">
+                      <div class="fw-bold fs-7 text-truncate" :title="item.user.name">{{ item.user.name }}</div>
+                      <div class="text-muted fs-8 text-truncate" :title="item.wallet_number">{{ item.wallet_number }}</div>
                     </div>
                   </div>
                 </td>
-                <td class="fs-8 text-muted">{{ item.reference_number }}</td>
-                <td class="fs-7">{{ item.payment_method }}</td>
-                <td class="fw-bold fs-6 text-primary">{{ formatRupiah(item.amount) }}</td>
-                <td class="fs-8 text-muted">{{ formatDate(item.created_at) }}</td>
-                <td>
-                  <span class="badge" :class="`badge-light-${item.status_color}`">
+                <td class="fs-8 text-muted text-truncate" :title="item.reference_number" style="max-width: 140px;">{{ item.reference_number }}</td>
+                <td class="fs-7 text-truncate" style="max-width: 120px;">{{ item.payment_method }}</td>
+                <td class="fw-bold fs-6 text-primary" style="white-space: nowrap;">{{ formatRupiah(item.amount) }}</td>
+                <td class="fs-8 text-muted" style="white-space: nowrap;">{{ formatDate(item.created_at) }}</td>
+                <td style="white-space: nowrap;">
+                  <span class="badge fs-8" :class="`badge-light-${item.status_color}`">
                     {{ item.status_label }}
                   </span>
                 </td>
-                <td class="text-end pe-4">
-                  <button class="btn btn-sm btn-icon btn-light-primary me-2" @click="openDetail(item)" title="Lihat Detail">
-                    <i class="bi bi-eye fs-6"></i>
-                  </button>
-                  <template v-if="item.status === 'pending'">
-                    <button class="btn btn-sm btn-icon btn-light-success me-2" @click="openApprove(item)" title="Setujui">
-                      <i class="bi bi-check-lg fs-6"></i>
+                <td class="text-end pe-4" style="white-space: nowrap;">
+                  <div class="d-flex gap-1 justify-content-end">
+                    <button class="btn btn-sm btn-icon btn-light-primary" @click="openDetail(item)" title="Lihat Detail" style="width: 30px; height: 30px;">
+                      <i class="bi bi-eye fs-6"></i>
                     </button>
-                    <button class="btn btn-sm btn-icon btn-light-danger" @click="openReject(item)" title="Tolak">
-                      <i class="bi bi-x-lg fs-6"></i>
-                    </button>
-                  </template>
+                    <template v-if="item.status === 'pending'">
+                      <button class="btn btn-sm btn-icon btn-light-success" @click="openApprove(item)" title="Setujui" style="width: 30px; height: 30px;">
+                        <i class="bi bi-check-lg fs-6"></i>
+                      </button>
+                      <button class="btn btn-sm btn-icon btn-light-danger" @click="openReject(item)" title="Tolak" style="width: 30px; height: 30px;">
+                        <i class="bi bi-x-lg fs-6"></i>
+                      </button>
+                    </template>
+                  </div>
                 </td>
               </tr>
             </tbody>
@@ -135,7 +137,7 @@
         </div>
 
         <!-- Pagination -->
-        <div class="d-flex justify-content-between align-items-center mt-4" v-if="meta.last_page > 1">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mt-4" v-if="meta.last_page > 1" style="flex-wrap: wrap;">
           <div class="text-muted fs-7">{{ meta.total }} pengajuan</div>
           <div class="d-flex gap-2">
             <button class="btn btn-sm btn-light" :disabled="meta.current_page === 1" @click="changePage(meta.current_page - 1)">
@@ -153,50 +155,50 @@
 
     <!-- Modal Detail -->
     <div v-if="detailModal && selectedItem" class="modal fade show d-block" style="background:rgba(0,0,0,0.5)" @click.self="detailModal = false">
-      <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content">
-          <div class="modal-header">
+      <div class="modal-dialog modal-dialog-centered modal-lg" style="max-width: 90vw;">
+        <div class="modal-content" style="max-height: 90vh; overflow-y: auto;">
+          <div class="modal-header sticky-top bg-white" style="z-index: 1000;">
             <h5 class="modal-title">Detail Top Up — {{ selectedItem.reference_number }}</h5>
             <button class="btn-close" @click="detailModal = false"></button>
           </div>
           <div class="modal-body">
-            <div class="row g-5">
-              <div class="col-md-6">
+            <div class="row g-4">
+              <div class="col-12 col-md-6">
                 <div class="fw-bold text-muted fs-8 mb-1">USER</div>
-                <div class="fw-bold">{{ selectedItem.user.name }}</div>
-                <div class="text-muted fs-8">{{ selectedItem.user.email }}</div>
-                <div class="text-muted fs-8">Wallet: {{ selectedItem.wallet_number }}</div>
+                <div class="fw-bold text-truncate" :title="selectedItem.user.name">{{ selectedItem.user.name }}</div>
+                <div class="text-muted fs-8 text-truncate" :title="selectedItem.user.email">{{ selectedItem.user.email }}</div>
+                <div class="text-muted fs-8 text-truncate" :title="`Wallet: ${selectedItem.wallet_number}`">Wallet: {{ selectedItem.wallet_number }}</div>
               </div>
-              <div class="col-md-6">
+              <div class="col-12 col-md-6">
                 <div class="fw-bold text-muted fs-8 mb-1">DETAIL PEMBAYARAN</div>
-                <div class="fw-bold">{{ selectedItem.payment_method }}</div>
-                <div class="text-muted fs-8">{{ selectedItem.payment_account }} · {{ selectedItem.payment_holder }}</div>
+                <div class="fw-bold text-truncate" :title="selectedItem.payment_method">{{ selectedItem.payment_method }}</div>
+                <div class="text-muted fs-8 text-truncate" :title="`${selectedItem.payment_account} · ${selectedItem.payment_holder}`">{{ selectedItem.payment_account }} · {{ selectedItem.payment_holder }}</div>
               </div>
-              <div class="col-md-6">
+              <div class="col-12 col-md-6">
                 <div class="fw-bold text-muted fs-8 mb-1">JUMLAH</div>
                 <div class="fw-bolder fs-3 text-primary">{{ formatRupiah(selectedItem.amount) }}</div>
               </div>
-              <div class="col-md-6">
+              <div class="col-12 col-md-6">
                 <div class="fw-bold text-muted fs-8 mb-1">STATUS</div>
                 <span class="badge fs-7" :class="`badge-light-${selectedItem.status_color}`">{{ selectedItem.status_label }}</span>
               </div>
               <div class="col-12" v-if="selectedItem.proof_image">
                 <div class="fw-bold text-muted fs-8 mb-2">BUKTI TRANSFER</div>
-                <a :href="avatarUrl(selectedItem.proof_image)" target="_blank">
-                  <img :src="avatarUrl(selectedItem.proof_image)" alt="Bukti Transfer" class="rounded-2 mw-100 mh-300px" />
+                <a :href="avatarUrl(selectedItem.proof_image)" target="_blank" class="d-block">
+                  <img :src="avatarUrl(selectedItem.proof_image)" alt="Bukti Transfer" class="rounded-2" style="max-width: 100%; max-height: 300px; object-fit: contain;" />
                 </a>
               </div>
               <div class="col-12" v-if="selectedItem.user_note">
                 <div class="fw-bold text-muted fs-8 mb-1">CATATAN USER</div>
-                <div class="bg-light rounded p-3 fs-7">{{ selectedItem.user_note }}</div>
+                <div class="bg-light rounded p-3 fs-7" style="word-wrap: break-word; white-space: pre-wrap;">{{ selectedItem.user_note }}</div>
               </div>
               <div class="col-12" v-if="selectedItem.admin_note">
                 <div class="fw-bold text-muted fs-8 mb-1">CATATAN ADMIN</div>
-                <div class="bg-light rounded p-3 fs-7">{{ selectedItem.admin_note }}</div>
+                <div class="bg-light rounded p-3 fs-7" style="word-wrap: break-word; white-space: pre-wrap;">{{ selectedItem.admin_note }}</div>
               </div>
             </div>
           </div>
-          <div class="modal-footer">
+          <div class="modal-footer sticky-bottom bg-white" style="z-index: 1000;">
             <button class="btn btn-light" @click="detailModal = false">Tutup</button>
             <template v-if="selectedItem.status === 'pending'">
               <button class="btn btn-success" @click="detailModal = false; openApprove(selectedItem)">Setujui</button>
@@ -209,7 +211,7 @@
 
     <!-- Modal Approve -->
     <div v-if="approveModal" class="modal fade show d-block" style="background:rgba(0,0,0,0.5)" @click.self="approveModal = false">
-      <div class="modal-dialog modal-dialog-centered modal-sm">
+      <div class="modal-dialog modal-dialog-centered modal-sm" style="max-width: 85vw;">
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title text-success">Setujui Top Up</h5>
@@ -218,11 +220,11 @@
           <div class="modal-body">
             <div class="text-center mb-4">
               <i class="bi bi-check-circle-fill text-success" style="font-size: 3rem;"></i>
-              <div class="fw-bold mt-3">{{ selectedItem?.user.name }}</div>
-              <div class="fs-2 fw-bolder text-primary mt-1">{{ formatRupiah(selectedItem?.amount) }}</div>
+              <div class="fw-bold mt-3 text-truncate" :title="selectedItem?.user.name">{{ selectedItem?.user.name }}</div>
+              <div class="fs-2 fw-bolder text-primary mt-1" style="word-wrap: break-word;">{{ formatRupiah(selectedItem?.amount) }}</div>
             </div>
             <label class="form-label">Catatan Admin (opsional)</label>
-            <textarea v-model="adminNote" class="form-control form-control-solid" rows="3" placeholder="Catatan untuk user..."></textarea>
+            <textarea v-model="adminNote" class="form-control form-control-solid" rows="3" placeholder="Catatan untuk user..." style="resize: vertical; min-height: 80px;"></textarea>
           </div>
           <div class="modal-footer">
             <button class="btn btn-light" @click="approveModal = false">Batal</button>
@@ -237,7 +239,7 @@
 
     <!-- Modal Reject -->
     <div v-if="rejectModal" class="modal fade show d-block" style="background:rgba(0,0,0,0.5)" @click.self="rejectModal = false">
-      <div class="modal-dialog modal-dialog-centered modal-sm">
+      <div class="modal-dialog modal-dialog-centered modal-sm" style="max-width: 85vw;">
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title text-danger">Tolak Pengajuan</h5>
@@ -246,11 +248,11 @@
           <div class="modal-body">
             <div class="text-center mb-4">
               <i class="bi bi-x-circle-fill text-danger" style="font-size: 3rem;"></i>
-              <div class="fw-bold mt-3">{{ selectedItem?.user.name }}</div>
-              <div class="fs-5 fw-bold text-muted mt-1">{{ formatRupiah(selectedItem?.amount) }}</div>
+              <div class="fw-bold mt-3 text-truncate" :title="selectedItem?.user.name">{{ selectedItem?.user.name }}</div>
+              <div class="fs-5 fw-bold text-muted mt-1" style="word-wrap: break-word;">{{ formatRupiah(selectedItem?.amount) }}</div>
             </div>
             <label class="form-label required">Alasan Penolakan</label>
-            <textarea v-model="adminNote" class="form-control form-control-solid" rows="3" placeholder="Wajib isi alasan penolakan..."></textarea>
+            <textarea v-model="adminNote" class="form-control form-control-solid" rows="3" placeholder="Wajib isi alasan penolakan..." style="resize: vertical; min-height: 80px;"></textarea>
           </div>
           <div class="modal-footer">
             <button class="btn btn-light" @click="rejectModal = false">Batal</button>
