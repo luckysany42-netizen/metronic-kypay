@@ -20,11 +20,20 @@ class ApiService {
     ApiService.vueInstance = app;
     ApiService.vueInstance.use(VueAxios, axios);
     
-    // Get API URL from env, with fallback to /api
-    const apiUrl = import.meta.env.VITE_APP_API_URL || '/api';
+    // Get API URL from env
+    // Priority: 1) VITE_APP_API_URL env var, 2) window.location.origin for relative, 3) fallback /api
+    let apiUrl = import.meta.env.VITE_APP_API_URL;
+    
+    if (!apiUrl || apiUrl === 'undefined') {
+      // Fallback: use /api as default
+      apiUrl = '/api';
+    }
+    
     ApiService.vueInstance.axios.defaults.baseURL = apiUrl;
     
     console.log('🔧 ApiService initialized with baseURL:', apiUrl);
+    console.log('🔍 Debug - VITE_APP_API_URL:', import.meta.env.VITE_APP_API_URL);
+    console.log('🔍 Debug - Full env:', import.meta.env);
 
     // ✅ Auto-attach token ke SEMUA request tanpa perlu panggil setHeader() manual
     ApiService.vueInstance.axios.interceptors.request.use((config) => {
@@ -33,6 +42,7 @@ class ApiService {
         config.headers["Authorization"] = `Token ${token}`;
         config.headers["Accept"] = "application/json";
       }
+      console.log('📤 Axios Request:', {url: config.url, baseURL: ApiService.vueInstance.axios.defaults.baseURL, fullUrl: config.baseURL + config.url});
       return config;
     });
   }
