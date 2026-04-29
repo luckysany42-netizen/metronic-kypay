@@ -16,7 +16,7 @@ nixPkgs = [
 
 [phases.install]
 cmds = [
-  "npm install",
+  "npm install --legacy-peer-deps",
   "composer install --no-dev --optimize-autoloader"
 ]
 
