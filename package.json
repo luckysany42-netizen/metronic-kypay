@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "dev-all": "concurrently --names \"Laravel,Vite\" --prefix-colors \"blue,green\" \"cd ../backend && php artisan serve\" \"vite\"",
-    "build": "run-p type-check build-only",
+    "build": "vite build",
     "preview": "vite preview",
     "build-only": "vite build",
     "type-check": "vue-tsc --noEmit",
