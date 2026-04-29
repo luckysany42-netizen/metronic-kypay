@@ -19,8 +19,12 @@ class ApiService {
   public static init(app: App<Element>) {
     ApiService.vueInstance = app;
     ApiService.vueInstance.use(VueAxios, axios);
-    ApiService.vueInstance.axios.defaults.baseURL =
-      import.meta.env.VITE_APP_API_URL;
+    
+    // Get API URL from env, with fallback to /api
+    const apiUrl = import.meta.env.VITE_APP_API_URL || '/api';
+    ApiService.vueInstance.axios.defaults.baseURL = apiUrl;
+    
+    console.log('🔧 ApiService initialized with baseURL:', apiUrl);
 
     // ✅ Auto-attach token ke SEMUA request tanpa perlu panggil setHeader() manual
     ApiService.vueInstance.axios.interceptors.request.use((config) => {
