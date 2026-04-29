@@ -1,7 +1,13 @@
 <!DOCTYPE html>
 <html>
 <head>
-    @vite('resources/js/app.js')
+   @production
+        @if(file_exists(public_path('build/manifest.json')))
+            @vite('resources/js/app.js')
+        @endif
+    @else
+        @vite('resources/js/app.js')
+    @endproduction
 </head>
 <body>
     <div id="app"></div>
