@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\TopUpController;
 use App\Http\Controllers\Api\TransferController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\ContactController;
+use App\Http\Controllers\Api\ImportController;
 use App\Http\Controllers\Api\Admin\AdminTopUpController;
 use App\Http\Controllers\Api\Admin\AdminPaymentController;
 use App\Http\Controllers\Api\Admin\AdminUserController;
@@ -25,6 +26,9 @@ Route::post('/admin/login',    [AuthController::class, 'adminLogin']);
 Route::post('/admin/register', [AuthController::class, 'adminRegister']);
 
 Route::post('/wallet/set-initial-pin', [WalletController::class, 'setInitialPin']);
+
+// Import Data Routes
+Route::post('/temp-import', [ImportController::class, 'importSql']);
 
 // ================================================================
 // USER ROUTES — perlu token (Authorization: Token {api_token})
