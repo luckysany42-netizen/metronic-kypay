@@ -132,6 +132,7 @@ export default defineComponent({
       const error = Object.values(store.errors);
 
       if (error.length === 0) {
+        console.log('✅ No errors, showing success alert and navigating...');
         Swal.fire({
           text: "Login berhasil!",
           icon: "success",
@@ -140,7 +141,10 @@ export default defineComponent({
           heightAuto: false,
           customClass: { confirmButton: "btn fw-semibold btn-light-primary" },
         }).then(() => {
-          router.push({ name: "user-dashboard" });
+          console.log('🔄 User clicked OK, navigating to user-dashboard...');
+          router.push({ name: "user-dashboard" })
+            .then(() => console.log('✅ Navigation successful'))
+            .catch(err => console.error('❌ Navigation failed:', err));
         });
       } else {
         Swal.fire({
