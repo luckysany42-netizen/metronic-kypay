@@ -41,14 +41,28 @@ export const useAuthStore = defineStore("auth", () => {
 
   function login(credentials: { phone: string; password: string }) {
     return ApiService.post("login", credentials)
-      .then(({ data }) => { setAuth(data); })
-      .catch(({ response }) => { setError(response.data.errors); });
+      .then(({ data }) => {
+        console.log('✅ Login success:', data);
+        setAuth(data);
+      })
+      .catch(({ response }) => {
+        console.error('❌ Login error:', response?.status, response?.data);
+        const errorData = response?.data?.errors || response?.data || { login: 'Login gagal' };
+        setError(errorData);
+      });
   }
 
   function adminLogin(credentials: { email: string; password: string }) {
     return ApiService.post("admin/login", credentials)
-      .then(({ data }) => { setAuth(data); })
-      .catch(({ response }) => { setError(response.data.errors); });
+      .then(({ data }) => {
+        console.log('✅ Admin login success:', data);
+        setAuth(data);
+      })
+      .catch(({ response }) => {
+        console.error('❌ Admin login error:', response?.status, response?.data);
+        const errorData = response?.data?.errors || response?.data || { login: 'Login gagal' };
+        setError(errorData);
+      });
   }
 
   function logout() { purgeAuth(); }
