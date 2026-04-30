@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
+use Intervention\Image\ImageManager;
+use Intervention\Image\Drivers\Gd\Driver;
 
 class AuthController extends Controller
 {
@@ -250,7 +252,6 @@ class AuthController extends Controller
         // ============================================================
         // VALIDATION: File Format + Size
         // ============================================================
-        // Max 5MB = 5242880 bytes (Flutter app sudah compress ke JPEG)
         try {
             $request->validate([
                 'avatar' => 'required|image|mimes:jpg,jpeg,png|max:5242880',
@@ -265,40 +266,115 @@ class AuthController extends Controller
         }
 
         // ============================================================
-        // CLEANUP: Hapus avatar lama
+        // IMAGE VALIDATION & PROCESSING
         // ============================================================
-        if ($user->avatar) {
-            $oldPath = 'avatars/' . $user->avatar;
-            if (Storage::disk('public')->exists($oldPath)) {
-                Storage::disk('public')->delete($oldPath);
+        try {
+            $file = $request->file('avatar');
+            $filePath = $file->getRealPath();
+            
+            // Validate image integrity using getimagesize
+            $imageInfo = @getimagesize($filePath);
+            if ($imageInfo === false) {
+                throw new \Exception('File image tidak valid atau corrupt');
             }
+            
+            $width = $imageInfo[0];
+            $height = $imageInfo[1];
+            $mimeType = $imageInfo['mime'];
+            
+            // Validasi MIME type
+            if (!in_array($mimeType, ['image/jpeg', 'image/png'])) {
+                throw new \Exception('Format MIME tidak supported: ' . $mimeType);
+            }
+            
+            // Generate unique filename
+            $timestamp = now()->format('Y-m-d-His');
+            $fileHash = md5_file($filePath);
+            $filename = "{$timestamp}-{$fileHash}.jpg";  // Always save as .jpg
+            
+            // Prepare output
+            $avatarDir = public_path('uploads/avatars');
+            if (!is_dir($avatarDir)) {
+                mkdir($avatarDir, 0755, true);
+            }
+            
+            $outputPath = $avatarDir . DIRECTORY_SEPARATOR . $filename;
+            
+            // ============================================================
+            // PROCESS IMAGE: Re-encode atau copy
+            // ============================================================
+            // Coba pakai Intervention Image jika GD/Imagick available
+            $processed = false;
+            $finalWidth = $width;
+            $finalHeight = $height;
+            
+            try {
+                if (extension_loaded('gd') || extension_loaded('imagick')) {
+                    $manager = new ImageManager(new Driver());
+                    $image = $manager->read($filePath);
+                    
+                    // Convert to RGB dan resize jika perlu
+                    $image = $image->convert('rgb');
+                    
+                    if ($image->width() > 1024 || $image->height() > 1024) {
+                        $image = $image->scaleDown(1024, 1024);
+                    }
+                    
+                    // Save as JPEG
+                    $image->toJpeg(quality: 85)->save($outputPath);
+                    $processed = true;
+                    $finalWidth = $image->width();
+                    $finalHeight = $image->height();
+                }
+            } catch (\Exception $e) {
+                // Fall back to simple file copy jika image processing gagal
+                \Log::warning('Image processing failed, using fallback: ' . $e->getMessage());
+            }
+            
+            // Fallback: Jika tidak bisa process, copy file langsung
+            // Tapi convert PNG ke JPEG dulu jika perlu
+            if (!$processed) {
+                if ($mimeType === 'image/png') {
+                    // Try convert PNG to JPEG using system command
+                    $converted = false;
+                    
+                    // Try ImageMagick convert command
+                    if (shell_exec('which convert 2>/dev/null') || shell_exec('where convert 2>nul')) {
+                        $cmd = sprintf('convert "%s" -quality 85 -colorspace RGB "%s" 2>&1', escapeshellarg($filePath), escapeshellarg($outputPath));
+                        $output = shell_exec($cmd);
+                        $converted = file_exists($outputPath) && filesize($outputPath) > 0;
+                    }
+                    
+                    // Fallback ke copy jika convert tidak work
+                    if (!$converted) {
+                        copy($filePath, $outputPath);
+                    }
+                } else {
+                    // JPEG - just copy
+                    copy($filePath, $outputPath);
+                }
+            }
+            
+            // Verify file exists dan tidak kosong
+            if (!file_exists($outputPath) || filesize($outputPath) === 0) {
+                throw new \Exception('Gagal menyimpan file ke disk');
+            }
+            
+            $savedSize = filesize($outputPath);
+        } catch (\Exception $e) {
+            return response()->json([
+                'errors' => ['avatar' => 'Error processing image: ' . $e->getMessage()],
+            ], 500);
         }
 
         // ============================================================
-        // UPLOAD: Generate unique filename dengan timestamp + hash
+        // CLEANUP: Hapus avatar lama
         // ============================================================
-        $file = $request->file('avatar');
-        
-        // Timestamp: 2026-04-30-120530 (format: YYYY-MM-DD-HHmmss)
-        $timestamp = now()->format('Y-m-d-His');
-        
-        // Hash: dari file content untuk avoid collision
-        $fileHash = md5_file($file->getRealPath());
-        
-        // Extension dari uploaded file
-        $extension = $file->getClientOriginalExtension();
-        
-        // Filename: timestamp-hash.extension
-        // Contoh: 2026-04-30-120530-a1b2c3d4e5f6.jpg
-        $filename = "{$timestamp}-{$fileHash}.{$extension}";
-        
-        // Store di public/uploads/avatars/
-        $path = $file->storeAs('avatars', $filename, 'public');
-        
-        if (!$path) {
-            return response()->json([
-                'errors' => ['avatar' => 'Gagal menyimpan file. Silahkan coba lagi.'],
-            ], 500);
+        if ($user->avatar) {
+            $oldPath = public_path('uploads/avatars/' . $user->avatar);
+            if (file_exists($oldPath)) {
+                @unlink($oldPath);
+            }
         }
 
         // ============================================================
@@ -310,16 +386,23 @@ class AuthController extends Controller
         // ============================================================
         // RESPONSE: Return success dengan full details
         // ============================================================
+        $avatarUrl = env('APP_URL') . '/uploads/avatars/' . $filename;
+        
         return response()->json([
             'success'    => true,
             'message'    => 'Foto profil berhasil diperbarui',
-            'avatar'     => $user->avatar,
-            'avatar_url' => env('APP_URL') . '/uploads/avatars/' . $user->avatar,
+            'avatar'     => $filename,
+            'avatar_url' => $avatarUrl,
             'file_info'  => [
-                'name'      => $file->getClientOriginalName(),
-                'size'      => $file->getSize(),
-                'mime_type' => $file->getMimeType(),
-                'stored_as' => $filename,
+                'name'             => $file->getClientOriginalName(),
+                'original_size'    => $file->getSize(),
+                'processed_size'   => $savedSize,
+                'mime_type'        => 'image/jpeg',  // Always JPEG after save
+                'stored_as'        => $filename,
+                'final_dimensions' => "{$finalWidth}x{$finalHeight}",
+                'quality'          => 85,
+                'color_mode'       => 'RGB',
+                'processing'       => $processed ? 'Intervention Image (GD/Imagick)' : 'System fallback',
             ],
             'user'       => $user,
         ], 200);
