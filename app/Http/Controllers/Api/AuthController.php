@@ -246,19 +246,83 @@ class AuthController extends Controller
         if (!$user) {
             return response()->json(['errors' => ['auth' => 'Unauthorized']], 401);
         }
-        $request->validate(['avatar' => 'required|image|mimes:jpg,jpeg,png,webp|max:2048']);
-        if ($user->avatar && Storage::disk('public')->exists($user->avatar)) {
-            Storage::disk('public')->delete($user->avatar);
+
+        // ============================================================
+        // VALIDATION: File Format + Size
+        // ============================================================
+        // Max 5MB = 5242880 bytes (Flutter app sudah compress ke JPEG)
+        try {
+            $request->validate([
+                'avatar' => 'required|image|mimes:jpg,jpeg,png|max:5242880',
+            ], [
+                'avatar.required'   => 'File foto profil wajib diupload',
+                'avatar.image'      => 'File harus berupa gambar yang valid',
+                'avatar.mimes'      => 'Format file hanya support JPEG (.jpg, .jpeg) dan PNG (.png)',
+                'avatar.max'        => 'Ukuran file maksimal 5MB',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['errors' => $e->errors()], 422);
         }
-        $path = $request->file('avatar')->store('avatars', 'public');
-        $user->avatar = $path;
+
+        // ============================================================
+        // CLEANUP: Hapus avatar lama
+        // ============================================================
+        if ($user->avatar) {
+            $oldPath = 'avatars/' . $user->avatar;
+            if (Storage::disk('public')->exists($oldPath)) {
+                Storage::disk('public')->delete($oldPath);
+            }
+        }
+
+        // ============================================================
+        // UPLOAD: Generate unique filename dengan timestamp + hash
+        // ============================================================
+        $file = $request->file('avatar');
+        
+        // Timestamp: 2026-04-30-120530 (format: YYYY-MM-DD-HHmmss)
+        $timestamp = now()->format('Y-m-d-His');
+        
+        // Hash: dari file content untuk avoid collision
+        $fileHash = md5_file($file->getRealPath());
+        
+        // Extension dari uploaded file
+        $extension = $file->getClientOriginalExtension();
+        
+        // Filename: timestamp-hash.extension
+        // Contoh: 2026-04-30-120530-a1b2c3d4e5f6.jpg
+        $filename = "{$timestamp}-{$fileHash}.{$extension}";
+        
+        // Store di public/uploads/avatars/
+        $path = $file->storeAs('avatars', $filename, 'public');
+        
+        if (!$path) {
+            return response()->json([
+                'errors' => ['avatar' => 'Gagal menyimpan file. Silahkan coba lagi.'],
+            ], 500);
+        }
+
+        // ============================================================
+        // UPDATE: Simpan ke database
+        // ============================================================
+        $user->avatar = $filename;
         $user->save();
+
+        // ============================================================
+        // RESPONSE: Return success dengan full details
+        // ============================================================
         return response()->json([
-            'message'    => 'Avatar berhasil diupload',
+            'success'    => true,
+            'message'    => 'Foto profil berhasil diperbarui',
             'avatar'     => $user->avatar,
-            'avatar_url' => asset('/uploads/' . $user->avatar),
+            'avatar_url' => env('APP_URL') . '/uploads/avatars/' . $user->avatar,
+            'file_info'  => [
+                'name'      => $file->getClientOriginalName(),
+                'size'      => $file->getSize(),
+                'mime_type' => $file->getMimeType(),
+                'stored_as' => $filename,
+            ],
             'user'       => $user,
-        ]);
+        ], 200);
     }
 
     public function deleteAccount(Request $request)
