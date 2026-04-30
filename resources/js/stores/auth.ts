@@ -39,7 +39,7 @@ export const useAuthStore = defineStore("auth", () => {
     JwtService.destroyToken();
   }
 
-  function login(credentials: { email: string; password: string }) {
+  function login(credentials: { phone: string; password: string }) {
     return ApiService.post("login", credentials)
       .then(({ data }) => { setAuth(data); })
       .catch(({ response }) => { setError(response.data.errors); });
