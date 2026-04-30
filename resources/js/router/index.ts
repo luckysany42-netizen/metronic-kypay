@@ -263,25 +263,37 @@ router.beforeEach(async (to, from, next) => {
 
   document.title = `${to.meta.pageTitle} - ${import.meta.env.VITE_APP_NAME}`;
   configStore.resetLayoutConfig();
+  
+  console.log('🛣️ Router beforeEach:', { to: to.path, from: from.path, middleware: to.meta.middleware });
+  
   await authStore.verifyAuth();
+  
+  console.log('🔐 After verifyAuth - isAuthenticated:', authStore.isAuthenticated, 'role:', authStore.user.role);
 
   if (to.meta.middleware === "auth") {
     if (authStore.isAuthenticated && authStore.isAdmin()) {
+      console.log('✅ Auth check: isAdmin, allowing');
       next();
     } else if (authStore.isAuthenticated && authStore.isUser()) {
+      console.log('⚠️ Auth check: isUser but route requires admin, redirecting to user-dashboard');
       next({ name: "user-dashboard" });
     } else {
+      console.log('❌ Auth check: not authenticated, redirecting to sign-in');
       next({ name: "sign-in" });
     }
   } else if (to.meta.middleware === "auth-user") {
     if (authStore.isAuthenticated && authStore.isUser()) {
+      console.log('✅ Auth-user check: isUser, allowing');
       next();
     } else if (authStore.isAuthenticated && authStore.isAdmin()) {
+      console.log('⚠️ Auth-user check: isAdmin but route requires user, redirecting to dashboard');
       next({ name: "dashboard" });
     } else {
+      console.log('❌ Auth-user check: not authenticated, redirecting to user-sign-in');
       next({ name: "user-sign-in" });
     }
   } else {
+    console.log('✅ No middleware required, allowing');
     next();
   }
 });

@@ -124,12 +124,36 @@ export const useAuthStore = defineStore("auth", () => {
   }
 
 async function verifyAuth() {
-    if (JwtService.getToken()) {
+    const token = JwtService.getToken();
+    console.log('🔍 verifyAuth() - Token exists?', !!token);
+    
+    if (token) {
       ApiService.setHeader();
-      await ApiService.post("verify_token", { api_token: JwtService.getToken() })
-        .then(({ data }) => { setAuth(data); })
-        .catch(() => { purgeAuth(); });
+      console.log('🔐 Verifying token:', token.substring(0, 10) + '...');
+      
+      return ApiService.post("verify_token", { api_token: token })
+        .then(({ data }) => { 
+          console.log('✅ Token verified successfully');
+          console.log('📦 Response data:', data);
+          
+          // Handle both formats: direct user object or wrapped { success, user }
+          const userData = data.user || data;
+          console.log('👤 User data:', userData.id, userData.name, userData.role);
+          
+          // Ensure api_token is preserved
+          if (!userData.api_token) {
+            userData.api_token = token;
+            console.log('🔑 Added token to userData');
+          }
+          
+          setAuth(userData);
+        })
+        .catch((error) => { 
+          console.error('❌ Token verification failed:', error.response?.status, error.response?.data);
+          purgeAuth(); 
+        });
     } else {
+      console.log('⚠️ No token found, purging auth');
       purgeAuth();
     }
   }
