@@ -303,8 +303,8 @@ const avatarUrl = (path: string): string => {
   const base = import.meta.env.VITE_APP_API_URL?.replace("/api", "") ?? "http://127.0.0.1:8000";
   // Storage::url() sudah return path dengan /uploads/ di depan → jangan dobel
   if (path.startsWith("/uploads/")) return `${base}${path}`;
-  // Path relatif (avatar user) → tambahkan /uploads/
-  return `${base}/uploads/${path}`;
+  // Path relatif (avatar user) → tambahkan /uploads/avatars/
+  return `${base}/uploads/avatars/${path}`;
 };
 
 const fetchTopUps = async () => {

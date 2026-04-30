@@ -78,7 +78,7 @@ export default defineComponent({
 
     const userAvatar = computed(() => {
       if (!authStore.user?.avatar) return null;
-      return `${import.meta.env.VITE_APP_API_URL?.replace('/api', '')}/uploads/${authStore.user.avatar}`;
+      return `${import.meta.env.VITE_APP_API_URL?.replace('/api', '')}/uploads/avatars/${authStore.user.avatar}`;
     });
 
     const userInitial = computed(() => {

@@ -133,7 +133,7 @@ const getAvatarUrl = (avatar: string | null | undefined): string | null => {
   if (!avatar) return null;
   if (avatar.startsWith("http")) return avatar;
   const base = (import.meta.env.VITE_APP_API_URL ?? "").replace("/api", "");
-  return `${base}/uploads/${avatar}`;
+  return `${base}/uploads/avatars/${avatar}`;
 };
 
 const fetchTransactions = async () => {
