@@ -11,30 +11,6 @@ use App\Http\Controllers\Api\Admin\AdminPaymentController;
 use App\Http\Controllers\Api\Admin\AdminUserController;
 use App\Http\Controllers\Api\QrPaymentController;
 
-
-Route::post('/temp-import', function(\Illuminate\Http\Request $request) {
-    $sql = $request->getContent();
-    $statements = array_filter(
-        array_map('trim', explode(';', $sql)),
-        fn($s) => !empty($s) && !str_starts_with(ltrim($s), '--')
-    );
-    $success = 0;
-    $errors = [];
-    foreach ($statements as $statement) {
-        try {
-            \DB::unprepared($statement);
-            $success++;
-        } catch (\Exception $e) {
-            $errors[] = substr($statement, 0, 50) . ' -> ' . $e->getMessage();
-        }
-    }
-    return response()->json([
-        'success' => $success,
-        'errors' => count($errors),
-        'error_list' => array_slice($errors, 0, 5)
-    ]);
-});
-
 // ================================================================
 // PUBLIC ROUTES — tidak perlu token
 // ================================================================
