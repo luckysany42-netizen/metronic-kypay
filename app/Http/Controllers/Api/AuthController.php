@@ -210,7 +210,20 @@ class AuthController extends Controller
         if (!$user) {
             return response()->json(['errors' => ['token' => 'Token tidak valid']], 401);
         }
-        return response()->json($user);
+        
+        // Build avatar URL if avatar exists
+        $userData = $user->toArray();
+        if ($user->avatar) {
+            $baseUrl = env('APP_URL');
+            $userData['avatar_url'] = $baseUrl . '/uploads/avatars/' . $user->avatar;
+        } else {
+            $userData['avatar_url'] = null;
+        }
+        
+        return response()->json([
+            'success' => true,
+            'user' => $userData,
+        ]);
     }
 
     public function logout(Request $request)
