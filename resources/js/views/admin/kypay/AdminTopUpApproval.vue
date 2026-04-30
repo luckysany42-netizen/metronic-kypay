@@ -301,10 +301,10 @@ const avatarUrl = (path: string): string => {
   // Sudah full URL → pakai langsung
   if (path.startsWith("http://") || path.startsWith("https://")) return path;
   const base = import.meta.env.VITE_APP_API_URL?.replace("/api", "") ?? "http://127.0.0.1:8000";
-  // Storage::url() sudah return path dengan /storage/ di depan → jangan dobel
-  if (path.startsWith("/storage/")) return `${base}${path}`;
-  // Path relatif (avatar user) → tambahkan /storage/
-  return `${base}/storage/${path}`;
+  // Storage::url() sudah return path dengan /uploads/ di depan → jangan dobel
+  if (path.startsWith("/uploads/")) return `${base}${path}`;
+  // Path relatif (avatar user) → tambahkan /uploads/
+  return `${base}/uploads/${path}`;
 };
 
 const fetchTopUps = async () => {

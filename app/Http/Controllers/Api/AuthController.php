@@ -256,7 +256,7 @@ class AuthController extends Controller
         return response()->json([
             'message'    => 'Avatar berhasil diupload',
             'avatar'     => $user->avatar,
-            'avatar_url' => asset('storage/' . $user->avatar),
+            'avatar_url' => asset('/uploads/' . $user->avatar),
             'user'       => $user,
         ]);
     }

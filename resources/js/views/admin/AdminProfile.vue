@@ -157,7 +157,7 @@ export default defineComponent({
     // Avatar
     const avatarPreview = computed(() => {
       if (!authStore.user?.avatar) return null;
-      return `${import.meta.env.VITE_APP_API_URL?.replace('/api', '')}/storage/${authStore.user.avatar}`;
+      return `${import.meta.env.VITE_APP_API_URL?.replace('/api', '')}/uploads/${authStore.user.avatar}`;
     });
 
     const onAvatarChange = async (e: Event) => {

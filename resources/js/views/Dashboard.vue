@@ -511,7 +511,7 @@ export default defineComponent({
       if (!avatar) return null;
       if (avatar.startsWith("http")) return avatar;
       const base = (import.meta.env.VITE_APP_API_URL ?? "").replace("/api", "");
-      return `${base}/storage/${avatar}`;
+      return `${base}/uploads/${avatar}`;
     };
 
     const formatTime = (date: string) => {
