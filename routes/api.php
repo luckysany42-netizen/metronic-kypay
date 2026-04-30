@@ -12,22 +12,27 @@ use App\Http\Controllers\Api\Admin\AdminUserController;
 use App\Http\Controllers\Api\QrPaymentController;
 
 
-// TEMPORARY - hapus setelah import selesai
 Route::post('/temp-import', function(\Illuminate\Http\Request $request) {
-    try {
-        $sql = $request->getContent();
-        // Split per statement
-        $statements = array_filter(
-            array_map('trim', explode(';', $sql)),
-            fn($s) => !empty($s)
-        );
-        foreach ($statements as $statement) {
+    $sql = $request->getContent();
+    $statements = array_filter(
+        array_map('trim', explode(';', $sql)),
+        fn($s) => !empty($s) && !str_starts_with(ltrim($s), '--')
+    );
+    $success = 0;
+    $errors = [];
+    foreach ($statements as $statement) {
+        try {
             \DB::unprepared($statement);
+            $success++;
+        } catch (\Exception $e) {
+            $errors[] = substr($statement, 0, 50) . ' -> ' . $e->getMessage();
         }
-        return response()->json(['success' => true, 'count' => count($statements)]);
-    } catch (\Exception $e) {
-        return response()->json(['error' => $e->getMessage()], 500);
     }
+    return response()->json([
+        'success' => $success,
+        'errors' => count($errors),
+        'error_list' => array_slice($errors, 0, 5)
+    ]);
 });
 
 // ================================================================
