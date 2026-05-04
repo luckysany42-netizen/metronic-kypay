@@ -60,6 +60,21 @@ class Transaction extends Model
         return $query->whereIn('type', ['transfer_in', 'transfer_out']);
     }
 
+    public function scopeTransferIn($query)
+    {
+        return $query->where('type', 'transfer_in');
+    }
+
+    public function scopeTransferOut($query)
+    {
+        return $query->where('type', 'transfer_out');
+    }
+
+    public function scopePayments($query)
+    {
+        return $query->where('type', 'payment');
+    }
+
     public function scopeSuccess($query)
     {
         return $query->where('status', 'success');

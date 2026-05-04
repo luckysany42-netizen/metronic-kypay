@@ -47,9 +47,32 @@ class WalletController extends Controller
             return response()->json(['success' => false, 'message' => 'Wallet tidak ditemukan.'], 404);
         }
 
-        $transactions = $wallet->transactions()
-            ->with('relatedWallet.user:id,name,avatar')
-            ->latest()
+        $query = $wallet->transactions()
+            ->with('relatedWallet.user:id,name,avatar');
+
+        // Filter by type if provided
+        $type = $request->query('type');
+        if ($type) {
+            switch ($type) {
+                case 'top_up':
+                    $query->topUps();
+                    break;
+                case 'transfer_in':
+                    $query->transferIn();
+                    break;
+                case 'transfer_out':
+                    $query->transferOut();
+                    break;
+                case 'transfer':
+                    $query->transfers();
+                    break;
+                case 'payment':
+                    $query->payments();
+                    break;
+            }
+        }
+
+        $transactions = $query->latest()
             ->paginate(15);
 
         $mapped = $transactions->getCollection()->map(function ($trx) {
