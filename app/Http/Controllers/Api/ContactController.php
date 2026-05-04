@@ -48,10 +48,7 @@ class ContactController extends Controller
             ->map(function ($w) use ($user) {
                 $avatarUrl = null;
                 if ($w->user?->avatar) {
-                    $avatar = $w->user->avatar;
-                    $avatarUrl = str_starts_with($avatar, 'http')
-                        ? $avatar
-                        : asset('storage/' . $avatar);
+                    $avatarUrl = '/uploads/avatars/' . $w->user->avatar;
                 }
                 return [
                     'wallet_number' => $w->wallet_number,

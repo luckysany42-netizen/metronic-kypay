@@ -211,11 +211,10 @@ class AuthController extends Controller
             return response()->json(['errors' => ['token' => 'Token tidak valid']], 401);
         }
         
-        // Build avatar URL if avatar exists
+        // Return user data with relative path
         $userData = $user->toArray();
         if ($user->avatar) {
-            $baseUrl = env('APP_URL');
-            $userData['avatar_url'] = $baseUrl . '/uploads/avatars/' . $user->avatar;
+            $userData['avatar_url'] = '/uploads/avatars/' . $user->avatar;
         } else {
             $userData['avatar_url'] = null;
         }
@@ -303,7 +302,7 @@ class AuthController extends Controller
                 'success'    => true,
                 'message'    => 'Foto profil berhasil diperbarui',
                 'avatar'     => $filename,
-                'avatar_url' => env('APP_URL') . '/uploads/avatars/' . $filename,
+                'avatar_url' => '/uploads/avatars/' . $filename,
                 'user'       => $user,
             ]);
         } catch (\Exception $e) {
