@@ -117,7 +117,7 @@
             <div
               class="border-2 border-dashed border-gray-300 rounded-2 p-8 text-center cursor-pointer"
               :class="{ 'border-primary bg-light-primary': previewImage }"
-              @click="$refs.fileInput.click()"
+              @click="fileInput?.click()"
             >
               <div v-if="!previewImage">
                 <i class="bi bi-cloud-upload fs-2x text-muted mb-3 d-block"></i>
@@ -164,7 +164,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
-import ApiService from "@/core/services/ApiService";
+import ApiService from "../../../core/services/ApiService";
 
 const step = ref(1);
 const loadingMethods = ref(true);

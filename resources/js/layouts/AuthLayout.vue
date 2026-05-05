@@ -36,7 +36,7 @@
         <!-- Logo -->
         <div class="brand-logo">
           <img :src="getAssetPath('media/logos/logo-kypay.png')" alt="KyPay" class="brand-logo-img" />
-          <span class="brand-wordmark">KyPay Gak Bahaya ta</span>
+          <span class="brand-wordmark">KyPay</span>
         </div>
 
         <!-- Stats cards -->

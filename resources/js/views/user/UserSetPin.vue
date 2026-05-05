@@ -148,7 +148,7 @@
 <script lang="ts">
 import { defineComponent, ref, onMounted, onUnmounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
-import ApiService from "@/core/services/ApiService";
+import ApiService from "../../core/services/ApiService";
 
 export default defineComponent({
   name: "user-set-pin",

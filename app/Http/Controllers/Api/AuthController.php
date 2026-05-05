@@ -274,23 +274,22 @@ class AuthController extends Controller
 
         try {
             $file = $request->file('avatar');
-            $extension = $file->getClientOriginalExtension();
-            $filename = uniqid() . '.' . $extension;
+            $filename = \uniqid() . '.' . $file->getClientOriginalExtension();
             
             // Ensure directory exists
-            $avatarDir = public_path('uploads/avatars');
-            if (!is_dir($avatarDir)) {
-                mkdir($avatarDir, 0755, true);
+            $avatarDir = \public_path('uploads/avatars');
+            if (!\file_exists($avatarDir)) {
+                \mkdir($avatarDir, 0755, true);
             }
             
-            // Store file
+            // Save file as-is
             $file->move($avatarDir, $filename);
             
             // Delete old avatar
             if ($user->avatar) {
-                $oldPath = public_path('uploads/avatars/' . $user->avatar);
-                if (file_exists($oldPath)) {
-                    @unlink($oldPath);
+                $oldPath = \public_path('uploads/avatars/' . $user->avatar);
+                if (\file_exists($oldPath)) {
+                    @\unlink($oldPath);
                 }
             }
             

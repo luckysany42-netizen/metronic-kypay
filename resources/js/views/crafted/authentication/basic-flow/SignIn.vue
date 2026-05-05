@@ -10,31 +10,6 @@
       </div>
     </div>
 
-    <!-- Social Login -->
-    <div class="d-flex gap-3 mb-7">
-      <a href="#" class="d-flex align-items-center justify-content-center gap-2 fw-semibold fs-7 text-gray-700 text-decoration-none flex-grow-1"
-        style="border: 1.5px solid #e2e8f0; padding: 11px 16px; border-radius: 10px; background: #fff; transition: all 0.18s;"
-        @mouseenter="e => { (e.currentTarget as HTMLElement).style.background='#f8fafc'; (e.currentTarget as HTMLElement).style.borderColor='#cbd5e1'; }"
-        @mouseleave="e => { (e.currentTarget as HTMLElement).style.background='#fff'; (e.currentTarget as HTMLElement).style.borderColor='#e2e8f0'; }">
-        <img alt="Google" :src="getAssetPath('media/svg/brand-logos/google-icon.svg')" class="h-15px" />
-        Gunakan Google
-      </a>
-      <a href="#" class="d-flex align-items-center justify-content-center gap-2 fw-semibold fs-7 text-gray-700 text-decoration-none flex-grow-1"
-        style="border: 1.5px solid #e2e8f0; padding: 11px 16px; border-radius: 10px; background: #fff; transition: all 0.18s;"
-        @mouseenter="e => { (e.currentTarget as HTMLElement).style.background='#f8fafc'; (e.currentTarget as HTMLElement).style.borderColor='#cbd5e1'; }"
-        @mouseleave="e => { (e.currentTarget as HTMLElement).style.background='#fff'; (e.currentTarget as HTMLElement).style.borderColor='#e2e8f0'; }">
-        <img alt="Apple" :src="getAssetPath('media/svg/brand-logos/apple-black.svg')" class="h-15px" />
-        Gunakan Apple
-      </a>
-    </div>
-
-    <!-- OR Divider -->
-    <div class="d-flex align-items-center gap-3 mb-7">
-      <div class="flex-grow-1" style="height:1px; background: #e2e8f0;"></div>
-      <span class="text-muted fw-semibold fs-8 text-uppercase" style="letter-spacing:0.1em;">atau</span>
-      <div class="flex-grow-1" style="height:1px; background: #e2e8f0;"></div>
-    </div>
-
     <!-- Form -->
     <VForm
       class="form w-100"
@@ -78,7 +53,7 @@
             style="border-radius: 10px; border: 1.5px solid #e2e8f0; background: #fff; color: #374151;"
           />
           <span
-            class="position-absolute top-50 translate-middle-y me-4 end-0 cursor-pointer d-flex"
+            class="position-absolute top-50 translate-middle-y me-4 inset-e-0 cursor-pointer d-flex"
             @click="showPassword = !showPassword"
           >
             <i v-if="!showPassword" class="ki-duotone ki-eye fs-4 text-muted"><span class="path1"></span><span class="path2"></span><span class="path3"></span></i>

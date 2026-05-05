@@ -39,7 +39,7 @@
         <button
           type="submit"
           ref="submitButton"
-          class="btn fw-bold fs-6 flex-grow-1"
+          class="btn fw-bold fs-6 grow"
           style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: #fff; border: none; border-radius: 10px; padding: 14px; box-shadow: 0 4px 16px rgba(59,130,246,0.3);"
         >
           <span class="indicator-label">Kirim Reset Password</span>
@@ -72,7 +72,7 @@
 <script lang="ts">
 import { defineComponent, ref } from "vue";
 import { ErrorMessage, Field, Form as VForm } from "vee-validate";
-import { useAuthStore } from "@/stores/auth";
+import { useAuthStore } from "../../stores/auth";
 import * as Yup from "yup";
 import Swal from "sweetalert2/dist/sweetalert2.js";
 
