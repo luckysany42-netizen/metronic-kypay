@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\OtpController;
 use App\Http\Controllers\Api\WalletController;
 use App\Http\Controllers\Api\TopUpController;
 use App\Http\Controllers\Api\TransferController;
@@ -11,6 +12,7 @@ use App\Http\Controllers\Api\Admin\AdminTopUpController;
 use App\Http\Controllers\Api\Admin\AdminPaymentController;
 use App\Http\Controllers\Api\Admin\AdminUserController;
 use App\Http\Controllers\Api\QrPaymentController;
+use App\Http\Controllers\Api\MerchantController;
 
 // ================================================================
 // PUBLIC ROUTES — tidak perlu token
@@ -18,6 +20,11 @@ use App\Http\Controllers\Api\QrPaymentController;
 
 Route::post('/login',           [AuthController::class, 'login']);
 Route::post('/register',        [AuthController::class, 'register']);
+Route::prefix('otp')->group(function () {
+    Route::post('/send',   [OtpController::class, 'send']);
+    Route::post('/verify', [OtpController::class, 'verify']);
+    Route::get('/status',  [OtpController::class, 'status']);
+});
 Route::post('/verify_token',    [AuthController::class, 'verifyToken']);
 Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
 Route::post('/reset-password',  [AuthController::class, 'resetPassword']);
@@ -46,6 +53,7 @@ Route::middleware(['auth.token'])->group(function () {
     Route::prefix('wallet')->group(function () {
         Route::get('/',                     [WalletController::class, 'show']);
         Route::get('/transactions',         [WalletController::class, 'transactions']);
+        Route::get('/all-transactions',     [WalletController::class, 'allTransactions']);
         Route::post('/set-pin',             [WalletController::class, 'setPin']);
         Route::post('/verify-pin',          [WalletController::class, 'verifyPin']);
         Route::get('/find/{wallet_number}', [WalletController::class, 'findByNumber']);
@@ -82,6 +90,22 @@ Route::middleware(['auth.token'])->group(function () {
         Route::post('/pay',              [QrPaymentController::class, 'pay']);
         Route::get('/status/{token}',    [QrPaymentController::class, 'status']);
         Route::delete('/{token}/cancel', [QrPaymentController::class, 'cancel']);
+    });
+
+    // --- KyPay: Merchant Digital ---
+    Route::prefix('merchant')->group(function () {
+        // Browse
+        Route::get('/categories',              [MerchantController::class, 'categories']);   // Semua kategori
+        Route::get('/featured',                [MerchantController::class, 'featured']);     // Merchant unggulan
+        Route::get('/',                        [MerchantController::class, 'index']);        // List merchant (filter by category)
+        Route::get('/{id}',                    [MerchantController::class, 'show']);         // Detail merchant
+        Route::get('/{id}/products',           [MerchantController::class, 'products']);     // Produk/nominal merchant
+
+        // Transaksi
+        Route::post('/inquiry',                [MerchantController::class, 'inquiry']);      // Cek tagihan (PLN, BPJS, PDAM)
+        Route::post('/payment',                [MerchantController::class, 'payment']);      // Proses pembayaran
+        Route::get('/transactions/history',    [MerchantController::class, 'transactions']); // Riwayat transaksi merchant
+        Route::get('/transactions/{id}/receipt',[MerchantController::class, 'receipt']);     // Struk transaksi
     });
 
     // --- KyPay: Kontak ---

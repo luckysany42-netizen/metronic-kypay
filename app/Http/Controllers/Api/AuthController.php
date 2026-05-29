@@ -74,12 +74,12 @@ class AuthController extends Controller
         ]);
 
         $user = User::create([
-            'name'      => $request->first_name . ' ' . $request->last_name,
-            'email'     => $request->email,
-            'phone'     => $request->phone,
-            'password'  => Hash::make($request->password),
-            'api_token' => Str::random(60),
-            'role'      => 'user',
+            'name'                => $request->first_name . ' ' . $request->last_name,
+            'email'               => $request->email,
+            'phone'               => User::normalizePhone($request->phone),
+            'password'            => Hash::make($request->password),
+            'role'                => 'user',
+            'is_phone_verified'   => false,
         ]);
 
         Wallet::create([
@@ -94,7 +94,23 @@ class AuthController extends Controller
             'daily_topup_limit'    => 10000000,
         ]);
 
-        return response()->json($user, 201);
+        // Kirim OTP otomatis setelah register
+        app(\App\Services\OtpService::class)->sendOtp(
+            phone:   $user->phone,
+            purpose: 'register',
+            ip:      $request->ip(),
+        );
+
+        return response()->json([
+            'status'  => true,
+            'message' => 'Registrasi berhasil. Kode OTP telah dikirim ke nomor HP kamu.',
+            'data'    => [
+                'phone'              => $user->phone,
+                'phone_masked'       => substr($user->phone, 0, 4) . '****' . substr($user->phone, -4),
+                'expires_in_seconds' => 300,
+                'cooldown_seconds'   => 60,
+            ],
+        ], 201);
     }
 
     public function adminRegister(Request $request)

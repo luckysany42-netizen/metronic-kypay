@@ -255,4 +255,55 @@ class WalletController extends Controller
         ]);
     }
 
+    public function allTransactions(Request $request)
+    {
+        $user   = $request->user();
+        $wallet = $user->wallet;
+
+        // Wallet transactions
+        $walletTrx = $wallet ? $wallet->transactions()
+            ->latest()
+            ->limit(50)
+            ->get()
+            ->map(fn($t) => [
+                'id'          => $t->id,
+                'type'        => $t->type,
+                'type_label'  => $t->type_label ?? $t->type,
+                'source'      => 'wallet',
+                'description' => $t->description,
+                'amount'      => (float) $t->amount,
+                'is_credit'   => in_array($t->type, ['top_up','transfer_in']),
+                'status'      => 'success',
+                'created_at'  => $t->created_at,
+            ])->toArray() : [];
+
+        // Merchant transactions
+        $merchantTrx = \App\Models\MerchantTransaction::where('user_id', $user->id)
+            ->with(['merchant:id,name', 'product:id,name'])
+            ->latest()
+            ->limit(50)
+            ->get()
+            ->map(fn($t) => [
+                'id'          => $t->id,
+                'type'        => 'payment',
+                'type_label'  => $t->merchant->name ?? 'Layanan Digital',
+                'source'      => 'merchant',
+                'description' => $t->product->name ?? '',
+                'amount'      => (float) $t->total_amount,
+                'is_credit'   => false,
+                'status'      => $t->status,
+                'created_at'  => $t->created_at,
+            ])->toArray();
+
+        // Gabung dan sort by tanggal terbaru
+        $merged = collect(array_merge($walletTrx, $merchantTrx))
+            ->sortByDesc('created_at')
+            ->values();
+
+        return response()->json([
+            'status' => true,
+            'data'   => $merged,
+        ]);
+    }
+
 }

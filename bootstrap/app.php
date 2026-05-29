@@ -17,8 +17,9 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->alias([
-            'auth.token' => \App\Http\Middleware\AuthTokenMiddleware::class,
-            'role'       => \App\Http\Middleware\RoleMiddleware::class,
+            'auth.token'      => \App\Http\Middleware\AuthTokenMiddleware::class,
+            'role'            => \App\Http\Middleware\RoleMiddleware::class,
+            'phone.verified'  => \App\Http\Middleware\EnsurePhoneVerified::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
