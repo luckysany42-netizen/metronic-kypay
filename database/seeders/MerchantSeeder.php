@@ -307,7 +307,7 @@ class MerchantSeeder extends Seeder
             ['code' => 'YTP-3M', 'name' => 'YouTube Premium 3 Bulan', 'base' => 177000,'sell' => 183000,'fee' => 1000, 'validity' => '90 Hari'],
         ]);
 
-        $this->command->info('✅ MerchantSeeder selesai — ' .
+        $this->command->info('MerchantSeeder selesai — ' .
             MerchantCategory::count() . ' kategori, ' .
             Merchant::count() . ' merchant, ' .
             MerchantProduct::count() . ' produk.');
