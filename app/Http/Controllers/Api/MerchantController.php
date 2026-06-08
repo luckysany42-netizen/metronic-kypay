@@ -115,7 +115,6 @@ class MerchantController extends Controller
     }
 
     // ── POST /merchant/inquiry ────────────────────────────────────────────────
-    // Cek tagihan untuk merchant yang has_inquiry = true (PLN Pascabayar, BPJS, PDAM)
     public function inquiry(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -151,11 +150,8 @@ class MerchantController extends Controller
             'merchant_id'     => 'required|integer|exists:merchants,id',
             'product_id'      => 'required|integer|exists:merchant_products,id',
             'input_value'     => 'required|string|min:5|max:50',
-            'idempotency_key' => 'required|string|size:36', // UUID v4
+            'idempotency_key' => 'required|string|size:36',
             'pin'             => 'required|string|digits:6',
-        ], [
-            'idempotency_key.size' => 'Idempotency key harus berupa UUID (36 karakter).',
-            'pin.digits'           => 'PIN harus 6 digit angka.',
         ]);
 
         $user     = $request->user();
@@ -164,7 +160,6 @@ class MerchantController extends Controller
             ->where('is_available', true)
             ->findOrFail($validated['product_id']);
 
-        // Verifikasi PIN wallet
         $wallet = $user->wallet;
         if (!$wallet || !$wallet->pin_set) {
             return response()->json(['status' => false, 'message' => 'PIN wallet belum diset.'], 422);
@@ -173,7 +168,6 @@ class MerchantController extends Controller
             return response()->json(['status' => false, 'message' => 'PIN wallet tidak valid.'], 422);
         }
 
-        // Cek saldo
         if ($wallet->balance < $product->total_price) {
             return response()->json([
                 'status'  => false,
@@ -185,7 +179,6 @@ class MerchantController extends Controller
             ], 422);
         }
 
-        // Proses pembayaran
         $result = $this->paymentService->processPayment(
             user:           $user,
             merchant:       $merchant,
@@ -206,7 +199,7 @@ class MerchantController extends Controller
         ]);
     }
 
-    // ── GET /merchant/transactions ────────────────────────────────────────────
+    // ── GET /merchant/transactions/history ────────────────────────────────────
     public function transactions(Request $request): JsonResponse
     {
         $user = $request->user();
@@ -224,6 +217,7 @@ class MerchantController extends Controller
             'status'           => $t->status,
             'status_label'     => $t->status_label,
             'status_color'     => $t->status_color,
+            'provider_reference' => $t->provider_reference,
             'created_at'       => $t->created_at,
         ]);
 
@@ -266,14 +260,22 @@ class MerchantController extends Controller
         ]);
     }
 
-    // ── Helper ────────────────────────────────────────────────────────────────
+    // ── Helper: Format merchant response ──────────────────────────────────────
     private function formatMerchant(Merchant $merchant): array
     {
+        // ✅ FIX: Gunakan config('app.url') + path publik
+        // File logo ada di public/uploads/kypay/merchant-logos/
+        // Bukan di storage/ — jadi tidak pakai Storage::url()
+        $logoUrl = null;
+        if ($merchant->logo_url) {
+            $logoUrl = config('app.url') . '/uploads/kypay/merchant-logos/' . $merchant->logo_url;
+        }
+
         return [
             'id'          => $merchant->id,
             'code'        => $merchant->code,
             'name'        => $merchant->name,
-            'logo_url'    => $merchant->logo_url,
+            'logo_url'    => $logoUrl,
             'has_inquiry' => $merchant->has_inquiry,
             'is_featured' => $merchant->is_featured,
             'category'    => $merchant->category ? [

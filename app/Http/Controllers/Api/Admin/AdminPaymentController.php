@@ -202,7 +202,7 @@ class AdminPaymentController extends Controller
                 'account_number' => $m->account_number,
                 'account_name'   => $m->account_name,
                 'account_bank'   => $m->account_bank,
-                'logo'           => $m->logo ? Storage::url($m->logo) : null,
+                'logo'           => $m->logo ? Storage::disk('public')->url($m->logo) : null,
                 'instructions'   => $m->instructions,
                 'color'          => $m->color,
                 'min_amount'     => (float) $m->min_amount,
